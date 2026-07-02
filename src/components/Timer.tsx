@@ -10,6 +10,7 @@ interface TimerProps {
   initialSeconds?: number;
   onComplete?: () => void;
   autoStartOnSet?: boolean;
+  trigger?: number;
 }
 
 export function playTimerBeep() {
@@ -46,7 +47,7 @@ export function playTimerBeep() {
   }
 }
 
-export default function Timer({ initialSeconds = 60, onComplete, autoStartOnSet = true }: TimerProps) {
+export default function Timer({ initialSeconds = 60, onComplete, autoStartOnSet = true, trigger = 0 }: TimerProps) {
   const [duration, setDuration] = useState(initialSeconds);
   const [timeLeft, setTimeLeft] = useState(initialSeconds);
   const [isRunning, setIsRunning] = useState(false);
@@ -60,6 +61,15 @@ export default function Timer({ initialSeconds = 60, onComplete, autoStartOnSet 
     setTimeLeft(initialSeconds);
     setIsRunning(false);
   }, [initialSeconds]);
+
+  // Handle auto-start trigger
+  useEffect(() => {
+    if (trigger > 0 && autoStartOnSet) {
+      setDuration(initialSeconds);
+      setTimeLeft(initialSeconds);
+      setIsRunning(true);
+    }
+  }, [trigger, autoStartOnSet, initialSeconds]);
 
   useEffect(() => {
     if (isRunning) {

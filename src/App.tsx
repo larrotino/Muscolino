@@ -31,6 +31,7 @@ export default function App() {
   const [sessionDurationSecs, setSessionDurationSecs] = useState<number>(0);
   const [timerTargetSeconds, setTimerTargetSeconds] = useState<number>(60);
   const [autoStartTimer, setAutoStartTimer] = useState<boolean>(true);
+  const [timerTrigger, setTimerTrigger] = useState<number>(0);
   const [workoutNotes, setWorkoutNotes] = useState<string>('');
   
   // Warm-up Checklist
@@ -221,6 +222,7 @@ export default function App() {
         setTimerTargetSeconds(template.restSeconds);
         // Force timer update in widget by briefly blinking or letting it handle the prop sync
         if (autoStartTimer) {
+          setTimerTrigger(Date.now());
           // Play a tiny confirmation sound and restart the timer widget
           const widget = document.getElementById('rest-timer-widget');
           if (widget) {
@@ -259,6 +261,9 @@ export default function App() {
       setCompletedCircuitExercises([false, false, false, false]);
       // Start circuit default rest of 2 minutes (120s)
       setTimerTargetSeconds(120);
+      if (autoStartTimer) {
+        setTimerTrigger(Date.now());
+      }
     }
   };
 
@@ -1068,6 +1073,7 @@ export default function App() {
                         <Timer
                           initialSeconds={timerTargetSeconds}
                           autoStartOnSet={autoStartTimer}
+                          trigger={timerTrigger}
                         />
 
                         {/* Program overview hint */}
