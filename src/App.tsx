@@ -492,8 +492,13 @@ export default function App() {
       {/* Dynamic Header */}
       <header className="z-10 border-b border-white/10 bg-white/5 backdrop-blur-md sticky top-0 px-4 py-4 md:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl text-white shadow-lg shadow-blue-500/20">
-            <Dumbbell className="w-6 h-6 animate-pulse text-white" />
+          <div className="p-1 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-lg shadow-blue-500/20 flex items-center justify-center overflow-hidden w-11 h-11">
+            <img 
+              src="/Icon.png" 
+              alt="Muscolino Logo" 
+              className="w-9 h-9 object-cover rounded-lg" 
+              referrerPolicy="no-referrer"
+            />
           </div>
           <div>
             <h1 className="text-xl font-bold font-display tracking-tight text-slate-100">Muscolino</h1>
