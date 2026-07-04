@@ -489,92 +489,96 @@ export default function App() {
         <div className="absolute top-[40%] left-[60%] w-[35%] h-[35%] bg-blue-500/10 rounded-full blur-[130px]"></div>
       </div>
 
-      {/* Dynamic Header */}
-      <header className="z-10 border-b border-white/10 bg-white/5 backdrop-blur-md sticky top-0 px-4 py-4 md:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-1 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-lg shadow-blue-500/20 flex items-center justify-center overflow-hidden w-11 h-11">
-            <img 
-              src="/Icon.png" 
-              alt="Muscolino Logo" 
-              className="w-9 h-9 object-cover rounded-lg" 
-              referrerPolicy="no-referrer"
-            />
+      {/* Sticky Header & Nav & Timer */}
+      <div className="sticky top-0 z-40 bg-[#0f172a]/95 backdrop-blur-md border-b border-white/10 w-full flex flex-col">
+        {/* Dynamic Header */}
+        <header className="px-4 py-4 md:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="p-1 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-lg shadow-blue-500/20 flex items-center justify-center overflow-hidden w-11 h-11">
+              <img 
+                src="/Icon.png" 
+                alt="Muscolino Logo" 
+                className="w-9 h-9 object-cover rounded-lg" 
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold font-display tracking-tight text-slate-100">Muscolino</h1>
+              <p className="text-xs text-slate-400">Il tuo diario personale per lo sviluppo di forza e ipertrofia</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold font-display tracking-tight text-slate-100">Muscolino</h1>
-            <p className="text-xs text-slate-400">Il tuo diario personale per lo sviluppo di forza e ipertrofia</p>
-          </div>
-        </div>
 
-        {/* Global Workout Status indicator */}
-        {activeSession ? (
-          <div className="flex items-center gap-3 bg-blue-500/10 border border-blue-500/25 rounded-xl px-4 py-2 text-blue-400 font-mono text-sm backdrop-blur-sm">
-            <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
-            <span>SESSIONE ATTIVA • {formatDuration(sessionDurationSecs)}</span>
-          </div>
-        ) : (
-          <div className="text-xs text-slate-400 font-medium bg-white/5 border border-white/10 rounded-xl px-3.5 py-1.5 backdrop-blur-sm">
-            Programma strutturato: 3 blocchi da 4 settimane
-          </div>
-        )}
-      </header>
+          {/* Global Workout Status indicator */}
+          {activeSession ? (
+            <div className="flex items-center gap-3 bg-blue-500/10 border border-blue-500/25 rounded-xl px-4 py-2 text-blue-400 font-mono text-sm backdrop-blur-sm">
+              <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
+              <span>SESSIONE ATTIVA • {formatDuration(sessionDurationSecs)}</span>
+            </div>
+          ) : (
+            <div className="text-xs text-slate-400 font-medium bg-white/5 border border-white/10 rounded-xl px-3.5 py-1.5 backdrop-blur-sm">
+              Programma strutturato: 3 blocchi da 4 settimane
+            </div>
+          )}
+        </header>
 
-      {/* Main Content & Sidebar Layout */}
-      <main className="z-10 flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-8">
-        
-        {/* Left/Sidebar navigation */}
-        <div className="w-full lg:w-64 shrink-0 flex flex-row lg:flex-col gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
+        {/* Tab Navigation (horizontal) */}
+        <div className="w-full max-w-3xl mx-auto px-4 py-2.5 md:px-8 flex gap-2 overflow-x-auto scrollbar-none justify-start sm:justify-center">
           <button
             onClick={() => setActiveTab('allenamento')}
-            className={`flex-1 lg:flex-initial py-3 px-4 rounded-xl font-semibold text-sm flex items-center justify-center lg:justify-start gap-3 transition-all border ${
+            className={`flex-1 py-2 px-3 sm:py-2.5 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all border shrink-0 ${
               activeTab === 'allenamento'
                 ? 'bg-white/10 text-blue-400 border-white/15 backdrop-blur-sm shadow-md'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border-transparent'
             }`}
           >
-            <Flame size={18} />
+            <Flame size={16} />
             <span>Allenamento</span>
           </button>
 
           <button
             onClick={() => setActiveTab('cronologia')}
-            className={`flex-1 lg:flex-initial py-3 px-4 rounded-xl font-semibold text-sm flex items-center justify-center lg:justify-start gap-3 transition-all border ${
+            className={`flex-1 py-2 px-3 sm:py-2.5 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all border shrink-0 ${
               activeTab === 'cronologia'
                 ? 'bg-white/10 text-blue-400 border-white/15 backdrop-blur-sm shadow-md'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border-transparent'
             }`}
           >
-            <Calendar size={18} />
+            <Calendar size={16} />
             <span>Cronologia</span>
           </button>
 
           <button
             onClick={() => setActiveTab('statistiche')}
-            className={`flex-1 lg:flex-initial py-3 px-4 rounded-xl font-semibold text-sm flex items-center justify-center lg:justify-start gap-3 transition-all border ${
+            className={`flex-1 py-2 px-3 sm:py-2.5 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all border shrink-0 ${
               activeTab === 'statistiche'
                 ? 'bg-white/10 text-blue-400 border-white/15 backdrop-blur-sm shadow-md'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border-transparent'
             }`}
           >
-            <BarChart2 size={18} />
+            <BarChart2 size={16} />
             <span>Statistiche</span>
           </button>
 
           <button
             onClick={() => setActiveTab('scheda')}
-            className={`flex-1 lg:flex-initial py-3 px-4 rounded-xl font-semibold text-sm flex items-center justify-center lg:justify-start gap-3 transition-all border ${
+            className={`flex-1 py-2 px-3 sm:py-2.5 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all border shrink-0 ${
               activeTab === 'scheda'
                 ? 'bg-white/10 text-blue-400 border-white/15 backdrop-blur-sm shadow-md'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border-transparent'
             }`}
           >
-            <BookOpen size={18} />
+            <BookOpen size={16} />
             <span>Scheda 12 Sett.</span>
           </button>
         </div>
 
+
+      </div>
+
+      {/* Main Content Layout (Always Single Column/Mono-colonna) */}
+      <main className="z-10 flex-1 max-w-3xl w-full mx-auto p-4 md:p-8 flex flex-col gap-8">
         {/* Tab Panel View */}
-        <div className="flex-1 min-w-0">
+        <div className="w-full min-w-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -590,10 +594,10 @@ export default function App() {
                 <>
                   {!activeSession ? (
                     /* Setup Panel */
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="max-w-3xl mx-auto w-full">
                       
                       {/* Workout Selector Card */}
-                      <div className="md:col-span-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 md:p-8 space-y-6 shadow-xl relative overflow-hidden">
+                      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 md:p-8 space-y-6 shadow-xl relative overflow-hidden">
                         <div className="space-y-1.5">
                           <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2 font-display">
                             <Sparkles className="text-blue-400 w-5 h-5" />
@@ -612,9 +616,9 @@ export default function App() {
                               const phaseInfo = getPhaseForWeek(w);
                               let phaseBadgeColor = 'border-white/5 text-slate-400 bg-white/5 hover:bg-white/10';
                               if (w === currentWeek) {
-                                if (phaseInfo.phase === 'Costruzione') phaseBadgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold shadow-lg shadow-emerald-500/10';
-                                if (phaseInfo.phase === 'Intensità') phaseBadgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold shadow-lg shadow-amber-500/10';
-                                if (phaseInfo.phase === 'Forza') phaseBadgeColor = 'bg-rose-500/20 text-rose-300 border-rose-500/40 font-bold shadow-lg shadow-rose-500/10';
+                                  if (phaseInfo.phase === 'Costruzione') phaseBadgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold shadow-lg shadow-emerald-500/10';
+                                  if (phaseInfo.phase === 'Intensità') phaseBadgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold shadow-lg shadow-amber-500/10';
+                                  if (phaseInfo.phase === 'Forza') phaseBadgeColor = 'bg-rose-500/20 text-rose-300 border-rose-500/40 font-bold shadow-lg shadow-rose-500/10';
                               }
 
                               return (
@@ -679,29 +683,19 @@ export default function App() {
                           {/* Personal Weight input */}
                           <div className="space-y-2 w-full sm:w-auto">
                             <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block font-mono">3. Peso Personale Odierno</label>
-                            <div className="flex items-center gap-2 bg-black/30 border border-white/10 rounded-xl p-1.5 w-full sm:w-44 justify-between">
-                              <button
-                                onClick={() => setPersonalWeight(prev => Math.max(30, parseFloat((prev - 0.5).toFixed(1))))}
-                                className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-slate-200"
-                              >
-                                <Minus size={14} />
-                              </button>
-                              <div className="flex items-center gap-1 font-mono font-bold text-slate-200 text-sm">
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  value={personalWeight}
-                                  onChange={(e) => setPersonalWeight(parseFloat(e.target.value) || 0)}
-                                  className="w-16 bg-transparent text-center focus:outline-none focus:ring-0 font-mono text-slate-150"
-                                />
-                                <span className="text-xs text-slate-400">kg</span>
-                              </div>
-                              <button
-                                onClick={() => setPersonalWeight(prev => parseFloat((prev + 0.5).toFixed(1)))}
-                                className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-slate-200"
-                              >
-                                <Plus size={14} />
-                              </button>
+                            <div className="flex items-center gap-1 bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 w-full sm:w-36 justify-center">
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={personalWeight === 0 ? '' : personalWeight}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setPersonalWeight(val === '' ? 0 : parseFloat(val));
+                                }}
+                                className="w-16 bg-transparent text-center focus:outline-none focus:ring-0 font-mono font-bold text-slate-150 text-sm"
+                                placeholder="70.0"
+                              />
+                              <span className="text-xs font-bold text-slate-400 font-mono">kg</span>
                             </div>
                           </div>
 
@@ -714,69 +708,48 @@ export default function App() {
                           </button>
                         </div>
                       </div>
-
-                      {/* Info & Side widget block */}
-                      <div className="space-y-6">
-                        {currentWorkoutTemplate && (
-                          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 space-y-4">
-                            <h3 className="font-bold text-slate-200 text-sm uppercase tracking-wider flex items-center gap-2 font-mono">
-                              <Flame size={16} className="text-amber-500" />
-                              Riscaldamento (7')
-                            </h3>
-                            <p className="text-xs text-slate-450">
-                              Completa questo riscaldamento per massimizzare la mobilità articolare e prevenire infortuni.
-                            </p>
-                            <div className="space-y-2.5">
-                              {currentWorkoutTemplate.warmup.map((wu, idx) => (
-                                <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-300">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
-                                  <span>{wu}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 space-y-3">
-                          <h4 className="font-bold text-slate-200 text-xs uppercase tracking-wide font-mono">Cos'è il Peso Personale?</h4>
-                          <p className="text-xs text-slate-400 leading-relaxed font-light">
-                            Registrare il tuo peso all'inizio di ogni sessione aiuta a tracciare i progressi nel tempo e a rapportare il volume dei tuoi allenamenti a corpo libero al tuo peso corporeo attuale.
-                          </p>
-                        </div>
-                      </div>
                     </div>
                   ) : (
                     /* Active Workout Session Panel */
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="max-w-3xl mx-auto w-full space-y-6">
                       
-                      {/* Main Workout Logging Board */}
-                      <div className="lg:col-span-2 space-y-6">
-                        {/* Session details banner */}
-                        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xl">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 text-xs font-mono font-bold text-blue-400">
-                              <span>FASE {activeSession.phase.toUpperCase()}</span>
-                              <span>•</span>
-                              <span>SETTIMANA {activeSession.week}</span>
-                              <span>•</span>
-                              <span>GIORNO {activeSession.day}</span>
-                            </div>
-                            <h2 className="text-xl font-bold font-display text-slate-100">
-                              {activeSession.dayName}
-                            </h2>
+                      {/* Session details banner */}
+                      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xl">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-xs font-mono font-bold text-blue-400">
+                            <span>FASE {activeSession.phase.toUpperCase()}</span>
+                            <span>•</span>
+                            <span>SETTIMANA {activeSession.week}</span>
+                            <span>•</span>
+                            <span>GIORNO {activeSession.day}</span>
                           </div>
+                          <h2 className="text-xl font-bold font-display text-slate-100">
+                            {activeSession.dayName}
+                          </h2>
+                        </div>
 
-                          <div className="flex gap-4 font-mono text-xs">
-                            <div className="bg-black/30 px-3 py-2 rounded-xl border border-white/10 text-slate-300 backdrop-blur-sm">
-                              <span className="text-slate-500 block text-[10px] font-bold uppercase tracking-wide">Peso Corporeo</span>
-                              <span className="font-bold text-slate-100">{activeSession.personalWeight} kg</span>
-                            </div>
-                            <div className="bg-black/30 px-3 py-2 rounded-xl border border-white/10 text-slate-300 backdrop-blur-sm">
-                              <span className="text-slate-500 block text-[10px] font-bold uppercase tracking-wide">Durata Attiva</span>
-                              <span className="font-bold text-emerald-400">{formatDuration(sessionDurationSecs)}</span>
-                            </div>
+                        <div className="flex gap-4 font-mono text-xs">
+                          <div className="bg-black/30 px-3 py-2 rounded-xl border border-white/10 text-slate-300 backdrop-blur-sm">
+                            <span className="text-slate-500 block text-[10px] font-bold uppercase tracking-wide">Peso Corporeo</span>
+                            <span className="font-bold text-slate-100">{activeSession.personalWeight} kg</span>
+                          </div>
+                          <div className="bg-black/30 px-3 py-2 rounded-xl border border-white/10 text-slate-300 backdrop-blur-sm">
+                            <span className="text-slate-500 block text-[10px] font-bold uppercase tracking-wide">Durata Attiva</span>
+                            <span className="font-bold text-emerald-400">{formatDuration(sessionDurationSecs)}</span>
                           </div>
                         </div>
+                      </div>
+
+                      {/* Program overview hint */}
+                      <div className="bg-blue-500/10 border border-blue-500/25 rounded-2xl p-5 space-y-2 backdrop-blur-sm">
+                        <h4 className="font-bold text-slate-200 text-xs flex items-center gap-1.5 text-blue-400 uppercase tracking-wide font-mono">
+                          <Info size={14} />
+                          Fase {activeSession.phase}
+                        </h4>
+                        <p className="text-xs text-slate-400 leading-relaxed font-light">
+                          {getPhaseForWeek(activeSession.week).description}
+                        </p>
+                      </div>
 
                         {/* WARMUP CHECKLIST DRAWER (Active) */}
                         <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 space-y-3 shadow-xl">
@@ -794,17 +767,12 @@ export default function App() {
                               <button
                                 key={idx}
                                 onClick={() => handleWarmupToggle(idx)}
-                                className={`p-3 rounded-xl border text-left text-xs flex items-center gap-3 transition-all ${
+                                className={`p-3 rounded-xl border text-center text-xs transition-all ${
                                   checkedWarmup[idx]
-                                    ? 'bg-amber-500/10 border-amber-500/30 text-slate-200 backdrop-blur-sm'
+                                    ? 'bg-amber-500/10 border-amber-500/30 text-slate-200 backdrop-blur-sm font-semibold'
                                     : 'bg-black/30 border-white/5 text-slate-400 hover:border-white/10'
                                 }`}
                               >
-                                <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
-                                  checkedWarmup[idx] ? 'bg-amber-500 border-amber-500 text-slate-950' : 'border-slate-700'
-                                }`}>
-                                  {checkedWarmup[idx] && <Check size={12} strokeWidth={3} />}
-                                </div>
                                 <span className={checkedWarmup[idx] ? 'line-through text-slate-500 font-light' : ''}>
                                   {wu}
                                 </span>
@@ -1046,54 +1014,7 @@ export default function App() {
                           </div>
                         </div>
                       </div>
-
-                      {/* Right sidebar - Rest Timer & Active Widgets */}
-                      <div className="space-y-6">
-                        {/* Auto Timer settings */}
-                        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 space-y-4 shadow-xl">
-                          <h4 className="font-bold text-slate-200 text-xs uppercase tracking-wide font-mono">Preferenze Timer</h4>
-                          
-                          <label className="flex items-center gap-3 cursor-pointer group">
-                            <div className="relative">
-                              <input
-                                type="checkbox"
-                                checked={autoStartTimer}
-                                onChange={(e) => setAutoStartTimer(e.target.checked)}
-                                className="sr-only"
-                              />
-                              <div className={`w-9 h-5 rounded-full transition-colors ${autoStartTimer ? 'bg-blue-500' : 'bg-white/10'}`}></div>
-                              <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-slate-100 transition-transform ${autoStartTimer ? 'translate-x-4' : 'translate-x-0'}`}></div>
-                            </div>
-                            <span className="text-xs text-slate-300 group-hover:text-slate-100 transition-colors">
-                              Auto-start al completamento
-                            </span>
-                          </label>
-                          
-                          <p className="text-[10px] text-slate-450 leading-relaxed font-light">
-                            Quando abilitato, spuntare una serie avvierà automaticamente il conto alla rovescia con il tempo consigliato per l'esercizio.
-                          </p>
-                        </div>
-
-                        {/* Interactive Rest Timer */}
-                        <Timer
-                          initialSeconds={timerTargetSeconds}
-                          autoStartOnSet={autoStartTimer}
-                          trigger={timerTrigger}
-                        />
-
-                        {/* Program overview hint */}
-                        <div className="bg-blue-500/10 border border-blue-500/25 rounded-2xl p-5 space-y-2 backdrop-blur-sm">
-                          <h4 className="font-bold text-slate-200 text-xs flex items-center gap-1.5 text-blue-400 uppercase tracking-wide font-mono">
-                            <Info size={14} />
-                            Fase {activeSession.phase}
-                          </h4>
-                          <p className="text-xs text-slate-400 leading-relaxed font-light">
-                            {getPhaseForWeek(activeSession.week).description}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                    )}
                 </>
               )}
 
@@ -1299,6 +1220,18 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Floating Active Timer Widget */}
+      {activeSession && activeTab === 'allenamento' && (
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex justify-end pointer-events-none">
+          <Timer
+            initialSeconds={timerTargetSeconds}
+            autoStartOnSet={autoStartTimer}
+            onAutoStartChange={setAutoStartTimer}
+            trigger={timerTrigger}
+          />
+        </div>
+      )}
     </div>
   );
 }
