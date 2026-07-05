@@ -4,11 +4,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: fujicicimolly/muscolino:1.0.1
+    labels:
+      icon: https://raw.githubusercontent.com/larrotino/Muscolino/refs/heads/main/Icon.png
     ports:
       - "10009:3000"
     restart: unless-stopped
     volumes:
-      - ./data:/app/data
+      - /DATA/AppData/muscolino/data:/app/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
