@@ -9,10 +9,11 @@ export interface ExerciseTemplate {
   id: string;
   name: string;
   targetSets: number;
-  targetReps: string; // e.g. "5", "8/gamba", "10-15", "max -2", "45-60s"
+  targetReps: string; // e.g. "5", "8", "10-15", "max -2", "45s"
   defaultWeight: number; // in kg, e.g. 12, 0, or weight parameter
   notes?: string;
   restSeconds: number; // default rest between sets
+  isIsometric?: boolean; // True if it is an isometric exercise (timed)
 }
 
 export interface DayTemplate {

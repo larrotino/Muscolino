@@ -34,7 +34,7 @@ export const WORKOUT_PROGRAM: WeekTemplate[] = [
             id: 'w14_a_bulgarian',
             name: 'Bulgarian Split Squat',
             targetSets: 4,
-            targetReps: '8 / gamba',
+            targetReps: '8',
             defaultWeight: 12,
             notes: 'Mantieni l\'equilibrio, ginocchio posteriore quasi sfiora terra. Usa un manubrio da 12 kg (o due da 6 kg).',
             restSeconds: 75
@@ -52,19 +52,21 @@ export const WORKOUT_PROGRAM: WeekTemplate[] = [
             id: 'w14_a_plank',
             name: 'Plank',
             targetSets: 3,
-            targetReps: '45-60 s',
+            targetReps: '45-60s',
             defaultWeight: 0,
             notes: 'Retroversione del bacino attiva, glutei contratti.',
-            restSeconds: 60
+            restSeconds: 60,
+            isIsometric: true
           },
           {
             id: 'w14_a_hollow',
             name: 'Hollow Hold',
             targetSets: 3,
-            targetReps: '20-30 s',
+            targetReps: '20-30s',
             defaultWeight: 0,
             notes: 'Bassa schiena costantemente incollata al pavimento.',
-            restSeconds: 60
+            restSeconds: 60,
+            isIsometric: true
           }
         ]
       },
@@ -118,10 +120,11 @@ export const WORKOUT_PROGRAM: WeekTemplate[] = [
             id: 'w14_b_sideplank',
             name: 'Side Plank',
             targetSets: 3,
-            targetReps: '40 s / lato',
+            targetReps: '40s',
             defaultWeight: 0,
             notes: 'Bacino alto e allineato.',
-            restSeconds: 60
+            restSeconds: 60,
+            isIsometric: true
           }
         ]
       },
@@ -147,7 +150,7 @@ export const WORKOUT_PROGRAM: WeekTemplate[] = [
             id: 'w14_c_affondi',
             name: 'Affondi alternati',
             targetSets: 3,
-            targetReps: '10 / gamba',
+            targetReps: '10',
             defaultWeight: 0,
             notes: 'Usa il peso corporeo o piccoli manubri se facile. Passo lungo.',
             restSeconds: 60
@@ -211,7 +214,7 @@ export const WORKOUT_PROGRAM: WeekTemplate[] = [
             id: 'w58_a_bulgarian',
             name: 'Bulgarian Split Squat (Lento)',
             targetSets: 4,
-            targetReps: '8 / gamba',
+            targetReps: '8',
             defaultWeight: 12,
             notes: 'DISCESA LENTA in 3 secondi. Senti bene il carico sul quadricipite e gluteo.',
             restSeconds: 75
@@ -229,28 +232,31 @@ export const WORKOUT_PROGRAM: WeekTemplate[] = [
             id: 'w58_a_one_arm_plank',
             name: 'Plank Monobraccio',
             targetSets: 3,
-            targetReps: '45-60 s',
+            targetReps: '45-60s',
             defaultWeight: 0,
             notes: 'Plank sollevando un braccio dritto davanti a te. Alterna o mantieni per metà tempo.',
-            restSeconds: 60
+            restSeconds: 60,
+            isIsometric: true
           },
           {
             id: 'w58_a_hollow',
             name: 'Hollow Hold',
             targetSets: 3,
-            targetReps: '20-30 s',
+            targetReps: '20-30s',
             defaultWeight: 0,
             notes: 'Addome contratto al massimo, lombare a terra.',
-            restSeconds: 60
+            restSeconds: 60,
+            isIsometric: true
           },
           {
             id: 'w58_a_farmer',
             name: 'Farmer Carry (con manubrio)',
             targetSets: 3,
-            targetReps: '45 s',
+            targetReps: '45s',
             defaultWeight: 12,
             notes: 'Cammina mantenendo una postura dritta con il manubrio da 12 kg in una mano (cambia lato a metà o a serie alterne).',
-            restSeconds: 60
+            restSeconds: 60,
+            isIsometric: true
           }
         ]
       },
@@ -302,10 +308,11 @@ export const WORKOUT_PROGRAM: WeekTemplate[] = [
             id: 'w58_b_sideplank',
             name: 'Side Plank',
             targetSets: 3,
-            targetReps: '40 s / lato',
+            targetReps: '40s',
             defaultWeight: 0,
             notes: 'Mantieni l\'allineamento.',
-            restSeconds: 60
+            restSeconds: 60,
+            isIsometric: true
           }
         ]
       },
@@ -330,7 +337,7 @@ export const WORKOUT_PROGRAM: WeekTemplate[] = [
             id: 'w58_c_affondi',
             name: 'Affondi alternati',
             targetSets: 3,
-            targetReps: '10 / gamba',
+            targetReps: '10',
             defaultWeight: 0,
             notes: 'Resta dritto con il busto.',
             restSeconds: 60
@@ -394,7 +401,7 @@ export const WORKOUT_PROGRAM: WeekTemplate[] = [
             id: 'w912_a_bulgarian',
             name: 'Bulgarian Split Squat',
             targetSets: 4,
-            targetReps: '8 / gamba',
+            targetReps: '8',
             defaultWeight: 12,
             notes: 'Mantieni l\'esecuzione solida sotto carico.',
             restSeconds: 75
@@ -412,19 +419,21 @@ export const WORKOUT_PROGRAM: WeekTemplate[] = [
             id: 'w912_a_plank',
             name: 'Plank',
             targetSets: 3,
-            targetReps: '45-60 s',
+            targetReps: '45-60s',
             defaultWeight: 0,
             notes: 'Massima rigidità corporea.',
-            restSeconds: 60
+            restSeconds: 60,
+            isIsometric: true
           },
           {
             id: 'w912_a_hollow',
             name: 'Hollow Hold',
             targetSets: 3,
-            targetReps: '20-30 s',
+            targetReps: '20-30s',
             defaultWeight: 0,
             notes: 'Non perdere la forma.',
-            restSeconds: 60
+            restSeconds: 60,
+            isIsometric: true
           }
         ]
       },
@@ -476,10 +485,11 @@ export const WORKOUT_PROGRAM: WeekTemplate[] = [
             id: 'w912_b_sideplank',
             name: 'Side Plank',
             targetSets: 3,
-            targetReps: '40 s / lato',
+            targetReps: '40s',
             defaultWeight: 0,
             notes: 'Mantieni l\'estensione dell\'anca.',
-            restSeconds: 60
+            restSeconds: 60,
+            isIsometric: true
           }
         ]
       },
@@ -525,10 +535,11 @@ export const WORKOUT_PROGRAM: WeekTemplate[] = [
             id: 'w912_c_plank',
             name: 'Plank',
             targetSets: 3,
-            targetReps: '30 s',
+            targetReps: '30s',
             defaultWeight: 0,
             notes: 'Resisti con l\'addome di marmo.',
-            restSeconds: 120 // This rest is actually after completing the whole round!
+            restSeconds: 120, // This rest is actually after completing the whole round!
+            isIsometric: true
           }
         ]
       }
