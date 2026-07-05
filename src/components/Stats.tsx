@@ -4,16 +4,17 @@
  */
 
 import React, { useState } from 'react';
-import { WorkoutSession } from '../types';
+import { WorkoutSession, WeekTemplate } from '../types';
 import { TrendingUp, Dumbbell, Calendar, Weight, RefreshCw, BarChart2, Info } from 'lucide-react';
 
 interface StatsProps {
   sessions: WorkoutSession[];
+  workoutProgram: WeekTemplate[];
   onGenerateMockData?: () => void;
   onClearData?: () => void;
 }
 
-export default function Stats({ sessions, onGenerateMockData, onClearData }: StatsProps) {
+export default function Stats({ sessions, workoutProgram, onGenerateMockData, onClearData }: StatsProps) {
   const [selectedExerciseFilter, setSelectedExerciseFilter] = useState<string>('Trazioni al mento');
   const [showClearConfirm, setShowClearConfirm] = useState<boolean>(false);
 
@@ -39,11 +40,19 @@ export default function Stats({ sessions, onGenerateMockData, onClearData }: Sta
     ? selectedExerciseFilter 
     : allLoggedExercises[0] || 'Trazioni al mento';
 
-  // Calculate volume / max reps for selected exercise over time
+  // Calculate volume, max reps, and Strength Score for selected exercise over time
   const exerciseHistory = completedSessions.map(session => {
     const exercise = session.exercises.find(e => e.exerciseName.toLowerCase().includes(activeExerciseFilter.toLowerCase()));
     if (!exercise) return null;
     
+    // Find template to get isIsometric and difficulty
+    const template = workoutProgram
+      ?.flatMap(p => p.days.flatMap(d => d.exercises))
+      ?.find(ex => ex.name.toLowerCase() === exercise.exerciseName.toLowerCase() || ex.id === exercise.exerciseId);
+
+    const isIsometric = template?.isIsometric ?? false;
+    const difficulty = template?.difficulty ?? 1;
+
     // Total reps = sum of reps of all completed sets
     const totalReps = exercise.sets.reduce((sum, s) => sum + (s.completed ? s.reps : 0), 0);
     // Max weight used in session
@@ -51,12 +60,38 @@ export default function Stats({ sessions, onGenerateMockData, onClearData }: Sta
     // Estimated volume = sum(reps * weight) (or reps if bodyweight)
     const totalVolume = exercise.sets.reduce((sum, s) => sum + (s.completed ? s.reps * (s.weight || 1) : 0), 0);
 
+    // Calculate maximum Strength Score achieved in any completed set during this session
+    let maxStrengthScore = 0;
+    let bestSetReps = 0;
+    let bestSetWeight = 0;
+
+    exercise.sets.forEach(s => {
+      if (s.completed) {
+        // Formula: Punteggio di Forza = (Peso Corporeo + Zavorra) * (1 + [Reps o (Secondi / 2.5)] / 30) * Difficoltà
+        const repsValue = isIsometric ? (s.reps / 2.5) : s.reps;
+        const multiplier = 1 + (repsValue / 30);
+        const score = (session.personalWeight + s.weight) * multiplier * difficulty;
+        if (score > maxStrengthScore) {
+          maxStrengthScore = score;
+          bestSetReps = s.reps;
+          bestSetWeight = s.weight;
+        }
+      }
+    });
+
+    const strengthScore = parseFloat(maxStrengthScore.toFixed(1));
+
     return {
       date: new Date(session.date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }),
       dateRaw: session.date,
       totalReps,
       maxWeight,
       totalVolume,
+      strengthScore,
+      bestSetReps,
+      bestSetWeight,
+      isIsometric,
+      difficulty,
       week: session.week,
       day: session.day
     };
@@ -297,8 +332,8 @@ export default function Stats({ sessions, onGenerateMockData, onClearData }: Sta
           <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 space-y-4 shadow-xl">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="space-y-1">
-                <h4 className="font-bold text-slate-200 text-base font-display">Evoluzione Prestazioni</h4>
-                <p className="text-xs text-slate-450">Analizza volume e ripetizioni dei tuoi esercizi principali</p>
+                <h4 className="font-bold text-slate-200 text-base font-display">Andamento Punteggio di Forza</h4>
+                <p className="text-xs text-slate-450">Traccia il massimale stimato (1RM modificato) delle migliori serie</p>
               </div>
 
               {/* Selector */}
@@ -310,7 +345,7 @@ export default function Stats({ sessions, onGenerateMockData, onClearData }: Sta
                 {allLoggedExercises.length > 0 ? (
                   allLoggedExercises.map(exName => (
                     <option key={exName} value={exName} className="bg-slate-950">
-                      {exName}
+                       {exName}
                     </option>
                   ))
                 ) : (
@@ -324,11 +359,11 @@ export default function Stats({ sessions, onGenerateMockData, onClearData }: Sta
             </div>
 
             {exerciseHistory.length >= 2 ? (
-              <div className="relative w-full pt-4">
+              <div className="relative w-full pt-4 space-y-4">
                 <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-auto overflow-visible">
                   {/* Grid lines */}
                   {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
-                    const values = exerciseHistory.map(h => h.totalReps);
+                    const values = exerciseHistory.map(h => h.strengthScore);
                     const maxV = Math.max(...values);
                     const minV = Math.min(...values);
                     const diff = maxV - minV === 0 ? 1 : maxV - minV;
@@ -352,7 +387,7 @@ export default function Stats({ sessions, onGenerateMockData, onClearData }: Sta
                           className="fill-slate-400 text-[10px] font-mono text-right"
                           textAnchor="end"
                         >
-                          {Math.round(gridVal)}
+                          {gridVal.toFixed(1)}
                         </text>
                       </g>
                     );
@@ -360,8 +395,8 @@ export default function Stats({ sessions, onGenerateMockData, onClearData }: Sta
 
                   {/* SVG Path line */}
                   <path
-                    d={getSvgCoordinates(exerciseHistory.map(h => h.totalReps), chartWidth, chartHeight, chartPadding)}
-                    className="stroke-blue-400 fill-none"
+                    d={getSvgCoordinates(exerciseHistory.map(h => h.strengthScore), chartWidth, chartHeight, chartPadding)}
+                    className="stroke-amber-400 fill-none"
                     strokeWidth="3.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -369,12 +404,12 @@ export default function Stats({ sessions, onGenerateMockData, onClearData }: Sta
 
                   {/* Chart Points */}
                   {exerciseHistory.map((item, idx) => {
-                    const values = exerciseHistory.map(h => h.totalReps);
+                    const values = exerciseHistory.map(h => h.strengthScore);
                     const maxV = Math.max(...values);
                     const minV = Math.min(...values);
                     const diff = maxV - minV === 0 ? 1 : maxV - minV;
                     const x = chartPadding + (idx / (exerciseHistory.length - 1)) * (chartWidth - chartPadding * 2);
-                    const y = chartHeight - chartPadding - ((item.totalReps - minV) / diff) * (chartHeight - chartPadding * 2);
+                    const y = chartHeight - chartPadding - ((item.strengthScore - minV) / diff) * (chartHeight - chartPadding * 2);
 
                     return (
                       <g key={idx} className="group">
@@ -382,25 +417,25 @@ export default function Stats({ sessions, onGenerateMockData, onClearData }: Sta
                           cx={x}
                           cy={y}
                           r="5"
-                          className="fill-blue-400 stroke-black/50 cursor-pointer"
+                          className="fill-amber-400 stroke-black/50 cursor-pointer"
                           strokeWidth="2"
                         />
                         <rect
-                          x={x - 30}
-                          y={y - 28}
-                          width="60"
-                          height="20"
+                          x={x - 45}
+                          y={y - 30}
+                          width="90"
+                          height="22"
                           rx="4"
-                          className="fill-black/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none stroke-white/10"
+                          className="fill-black/90 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none stroke-white/10 shadow-lg"
                           strokeWidth="1"
                         />
                         <text
                           x={x}
-                          y={y - 14}
-                          className="fill-slate-100 text-[9px] font-mono font-bold text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                          y={y - 15}
+                          className="fill-amber-300 text-[9px] font-mono font-bold text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
                           textAnchor="middle"
                         >
-                          {item.totalReps} Rip / {item.maxWeight > 0 ? `+${item.maxWeight}kg` : 'corpo lib.'}
+                          {item.strengthScore} pt ({item.bestSetReps}{item.isIsometric ? 's' : ''} @ {item.bestSetWeight}kg)
                         </text>
                         {/* Date label under the chart */}
                         {idx === 0 || idx === exerciseHistory.length - 1 || (exerciseHistory.length < 8 && idx % 2 === 0) ? (
@@ -419,10 +454,22 @@ export default function Stats({ sessions, onGenerateMockData, onClearData }: Sta
                 </svg>
                 
                 {/* Legend */}
-                <div className="flex justify-center gap-6 mt-2 text-xs">
+                <div className="flex justify-center gap-6 text-xs pt-1">
                   <div className="flex items-center gap-1.5 text-slate-400">
-                    <span className="w-2.5 h-2.5 rounded-full bg-blue-400"></span>
-                    <span className="text-slate-450 font-mono text-[10px]">Ripetizioni Totali Eseguite</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                    <span className="text-slate-450 font-mono text-[10px]">Massimale Stimato Modificato (pt)</span>
+                  </div>
+                </div>
+
+                {/* Formula explanation */}
+                <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-4 flex gap-3 text-xs leading-relaxed text-slate-400 font-light font-mono">
+                  <Info size={16} className="text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold text-amber-350 block mb-1">Punteggio di Forza (Formula):</span>
+                    <span>Punteggio = (Peso Corporeo + Zavorra) × (1 + [Reps o (Secondi / 2.5)] / 30) × Difficoltà</span>
+                    <div className="text-[10px] text-slate-500 mt-1">
+                      Calcolato automaticamente sulla serie migliore di ogni sessione, adattando sia esercizi isometrici che classici.
+                    </div>
                   </div>
                 </div>
               </div>

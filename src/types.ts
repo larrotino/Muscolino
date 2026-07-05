@@ -14,6 +14,7 @@ export interface ExerciseTemplate {
   notes?: string;
   restSeconds: number; // default rest between sets
   isIsometric?: boolean; // True if it is an isometric exercise (timed)
+  difficulty?: number; // Exercise difficulty factor (defaults to 1)
 }
 
 export interface DayTemplate {

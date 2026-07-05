@@ -66,13 +66,33 @@ export default function App() {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          // Ensure all exercises have difficulty initialized to 1 if missing
+          return parsed.map((week: any) => ({
+            ...week,
+            days: week.days.map((day: any) => ({
+              ...day,
+              exercises: day.exercises.map((ex: any) => ({
+                ...ex,
+                difficulty: ex.difficulty !== undefined ? ex.difficulty : 1
+              }))
+            }))
+          }));
         }
       } catch (err) {
         console.error("Errore nel caricamento del programma personalizzato:", err);
       }
     }
-    return WORKOUT_PROGRAM;
+    // Deep copy and map WORKOUT_PROGRAM to ensure difficulty is initialized to 1
+    return JSON.parse(JSON.stringify(WORKOUT_PROGRAM)).map((week: any) => ({
+      ...week,
+      days: week.days.map((day: any) => ({
+        ...day,
+        exercises: day.exercises.map((ex: any) => ({
+          ...ex,
+          difficulty: ex.difficulty !== undefined ? ex.difficulty : 1
+        }))
+      }))
+    }));
   });
   const [isEditingProgram, setIsEditingProgram] = useState<boolean>(false);
   const [tempWorkoutProgram, setTempWorkoutProgram] = useState<WeekTemplate[]>([]);
@@ -98,7 +118,8 @@ export default function App() {
       defaultWeight: 0,
       notes: '',
       restSeconds: 60,
-      isIsometric: false
+      isIsometric: false,
+      difficulty: 1
     });
     setTempWorkoutProgram(updated);
   };
@@ -165,6 +186,28 @@ export default function App() {
   
   // Warm-up Checklist
   const [checkedWarmup, setCheckedWarmup] = useState<boolean[]>([]);
+
+  // Sticky navigation and scroll direction behavior
+  const [isVisibleTabs, setIsVisibleTabs] = useState<boolean>(true);
+  const lastScrollY = useRef<number>(0);
+  const headerRef = useRef<HTMLElement | null>(null);
+  const [headerHeight, setHeaderHeight] = useState<number>(76);
+
+  useEffect(() => {
+    if (headerRef.current) {
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          setHeaderHeight(entry.target.clientHeight);
+        }
+      });
+      resizeObserver.observe(headerRef.current);
+      return () => resizeObserver.disconnect();
+    }
+  }, []);
+
+  // Exercise card collapse tracking (by exerciseId)
+  const [manuallyExpanded, setManuallyExpanded] = useState<Record<string, boolean>>({});
+  const prevCompletedRef = useRef<boolean[]>([]);
   
   // Circuit Specific Tracker State (Weeks 9-12 Day C)
   const [circuitRound, setCircuitRound] = useState<number>(1);
@@ -305,6 +348,83 @@ export default function App() {
       }
     }
   }, [sessions]);
+
+  // Listen for scroll events to hide/show navigation tabs
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // If close to the top, always show tabs
+      if (currentScrollY < 80) {
+        setIsVisibleTabs(true);
+        return;
+      }
+      
+      // Minimum change threshold to prevent jitter on tiny scroll adjustments
+      if (Math.abs(currentScrollY - lastScrollY.current) < 8) {
+        return;
+      }
+      
+      if (currentScrollY > lastScrollY.current) {
+        // Scrolling down -> hide tabs
+        setIsVisibleTabs(false);
+      } else {
+        // Scrolling up -> show tabs
+        setIsVisibleTabs(true);
+      }
+      
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Monitor exercise completion to automatically collapse and scroll to next card
+  useEffect(() => {
+    if (!activeSession) {
+      prevCompletedRef.current = [];
+      return;
+    }
+
+    const currentCompleted = activeSession.exercises.map(
+      ex => ex.sets.length > 0 && ex.sets.every(set => set.completed)
+    );
+
+    // Check if an exercise has JUST transitioned to fully completed
+    const justCompletedIdx = currentCompleted.findIndex(
+      (completed, idx) => completed && !prevCompletedRef.current[idx]
+    );
+
+    if (justCompletedIdx !== -1) {
+      const nextIdx = justCompletedIdx + 1;
+      if (nextIdx < activeSession.exercises.length) {
+        // Smoothly scroll the next exercise card into the center of the viewport
+        setTimeout(() => {
+          const nextCard = document.getElementById(`exercise-card-${nextIdx}`);
+          if (nextCard) {
+            nextCard.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+          }
+        }, 300); // 300ms delay to allow collapse animation/layout to settle
+      } else {
+        // Scroll to the "end workout / notes" section if this was the last exercise
+        setTimeout(() => {
+          const notesSection = document.getElementById('session-notes-section');
+          if (notesSection) {
+            notesSection.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+          }
+        }, 300);
+      }
+    }
+
+    prevCompletedRef.current = currentCompleted;
+  }, [activeSession?.exercises]);
 
   // Active workout duration counter
   useEffect(() => {
@@ -690,7 +810,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-100 flex flex-col font-sans relative overflow-x-hidden selection:bg-blue-500/30 selection:text-blue-200">
+    <div className="min-h-screen bg-[#0f172a] text-slate-100 flex flex-col font-sans relative overflow-x-clip selection:bg-blue-500/30 selection:text-blue-200">
       
       {/* Dynamic Frosted Background Ambient Blurs */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
@@ -699,40 +819,50 @@ export default function App() {
         <div className="absolute top-[40%] left-[60%] w-[35%] h-[35%] bg-blue-500/10 rounded-full blur-[130px]"></div>
       </div>
 
-      {/* Sticky Header & Nav & Timer */}
-      <div className="sticky top-0 z-40 bg-[#0f172a]/95 backdrop-blur-md border-b border-white/10 w-full flex flex-col">
-        {/* Dynamic Header */}
-        <header className="px-4 py-4 md:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-white/5">
-          <div className="flex items-center gap-3">
-            <div className="p-1 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-lg shadow-blue-500/20 flex items-center justify-center overflow-hidden w-11 h-11">
-              <img 
-                src="/Icon.png" 
-                alt="Muscolino Logo" 
-                className="w-9 h-9 object-cover rounded-lg" 
-                referrerPolicy="no-referrer"
-              />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold font-display tracking-tight text-slate-100">Muscolino</h1>
-              <p className="text-xs text-slate-400">Il tuo diario personale per lo sviluppo di forza e ipertrofia</p>
-            </div>
+      {/* Sticky Header */}
+      <header 
+        ref={headerRef}
+        className="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur-md border-b border-white/10 w-full px-4 py-4 md:px-8 flex flex-col sm:flex-row items-center justify-between gap-4"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-1 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-lg shadow-blue-500/20 flex items-center justify-center overflow-hidden w-11 h-11">
+            <img 
+              src="/Icon.png" 
+              alt="Muscolino Logo" 
+              className="w-9 h-9 object-cover rounded-lg" 
+              referrerPolicy="no-referrer"
+            />
           </div>
+          <div>
+            <h1 className="text-xl font-bold font-display tracking-tight text-slate-100">Muscolino</h1>
+            <p className="text-xs text-slate-400">Il tuo diario personale per lo sviluppo di forza e ipertrofia</p>
+          </div>
+        </div>
 
-          {/* Global Workout Status indicator */}
-          {activeSession ? (
-            <div className="flex items-center gap-3 bg-blue-500/10 border border-blue-500/25 rounded-xl px-4 py-2 text-blue-400 font-mono text-sm backdrop-blur-sm">
-              <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
-              <span>SESSIONE ATTIVA • {formatDuration(sessionDurationSecs)}</span>
-            </div>
-          ) : (
-            <div className="text-xs text-slate-400 font-medium bg-white/5 border border-white/10 rounded-xl px-3.5 py-1.5 backdrop-blur-sm">
-              Programma strutturato: 3 blocchi da 4 settimane
-            </div>
-          )}
-        </header>
+        {/* Global Workout Status indicator */}
+        {activeSession ? (
+          <div className="flex items-center gap-3 bg-blue-500/10 border border-blue-500/25 rounded-xl px-4 py-2 text-blue-400 font-mono text-sm backdrop-blur-sm">
+            <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
+            <span>SESSIONE ATTIVA • {formatDuration(sessionDurationSecs)}</span>
+          </div>
+        ) : (
+          <div className="text-xs text-slate-400 font-medium bg-white/5 border border-white/10 rounded-xl px-3.5 py-1.5 backdrop-blur-sm">
+            Programma strutturato: 3 blocchi da 4 settimane
+          </div>
+        )}
+      </header>
 
-        {/* Tab Navigation (horizontal) */}
-        <div className="w-full max-w-3xl mx-auto px-4 py-2.5 md:px-8 flex gap-2 overflow-x-auto scrollbar-none justify-start sm:justify-center">
+      {/* Smart Sticky Tab Navigation (horizontal) */}
+      <div 
+        style={{ 
+          top: `${headerHeight}px`,
+          transform: isVisibleTabs ? 'translateY(0)' : 'translateY(-100%)',
+          opacity: isVisibleTabs ? 1 : 0,
+          pointerEvents: isVisibleTabs ? 'auto' : 'none',
+        }}
+        className="sticky z-40 bg-[#0f172a]/95 backdrop-blur-md border-b border-white/10 w-full transition-all duration-300 ease-in-out py-2.5 shadow-md shadow-black/10 flex flex-col"
+      >
+        <div className="w-full max-w-3xl mx-auto px-4 md:px-8 flex gap-2 overflow-x-auto scrollbar-none justify-start sm:justify-center">
           <button
             onClick={() => setActiveTab('allenamento')}
             className={`flex-1 py-2 px-3 sm:py-2.5 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all border shrink-0 ${
@@ -781,8 +911,6 @@ export default function App() {
             <span>Scheda 12 Sett.</span>
           </button>
         </div>
-
-
       </div>
 
       {/* Main Content Layout (Always Single Column/Mono-colonna) */}
@@ -818,35 +946,84 @@ export default function App() {
                           </p>
                         </div>
 
-                        {/* Week Selection Grid */}
-                        <div className="space-y-3">
-                          <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block font-mono">1. Settimana ({currentWeek}/12)</label>
-                          <div className="grid grid-cols-6 sm:grid-cols-12 gap-1.5">
-                            {Array.from({ length: 12 }, (_, i) => i + 1).map((w) => {
-                              const phaseInfo = getPhaseInfo(w);
-                              let phaseBadgeColor = 'border-white/5 text-slate-400 bg-white/5 hover:bg-white/10';
-                              if (w === currentWeek) {
-                                  if (phaseInfo.phase === 'Costruzione') phaseBadgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold shadow-lg shadow-emerald-500/10';
-                                  if (phaseInfo.phase === 'Intensità') phaseBadgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold shadow-lg shadow-amber-500/10';
-                                  if (phaseInfo.phase === 'Forza') phaseBadgeColor = 'bg-rose-500/20 text-rose-300 border-rose-500/40 font-bold shadow-lg shadow-rose-500/10';
-                              }
+                        {/* Block & Week Selection */}
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block font-mono">
+                              1. Seleziona Blocco Settimane
+                            </label>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                              {[
+                                { label: 'Settimane 1-4', range: [1, 2, 3, 4], phase: 'Costruzione', color: 'emerald' },
+                                { label: 'Settimane 5-8', range: [5, 6, 7, 8], phase: 'Intensità', color: 'amber' },
+                                { label: 'Settimane 9-12', range: [9, 10, 11, 12], phase: 'Forza', color: 'rose' }
+                              ].map((block) => {
+                                const isBlockActive = block.range.includes(currentWeek);
+                                let activeStyles = '';
+                                if (isBlockActive) {
+                                  if (block.color === 'emerald') activeStyles = 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-lg shadow-emerald-500/10';
+                                  if (block.color === 'amber') activeStyles = 'bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-lg shadow-amber-500/10';
+                                  if (block.color === 'rose') activeStyles = 'bg-rose-500/15 border-rose-500/40 text-rose-300 shadow-lg shadow-rose-500/10';
+                                }
 
-                              return (
-                                <button
-                                  key={w}
-                                  onClick={() => setCurrentWeek(w)}
-                                  className={`py-2 text-xs font-mono font-bold rounded-lg border transition-all ${
-                                    currentWeek === w 
-                                      ? phaseBadgeColor 
-                                      : 'bg-black/30 border-white/5 text-slate-400 hover:text-slate-200 hover:border-white/20'
-                                  }`}
-                                >
-                                  {w}
-                                </button>
-                              );
-                            })}
+                                return (
+                                  <button
+                                    key={block.label}
+                                    type="button"
+                                    onClick={() => {
+                                      if (!block.range.includes(currentWeek)) {
+                                        setCurrentWeek(block.range[0]);
+                                      }
+                                    }}
+                                    className={`py-2.5 px-4 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center gap-1 transition-all ${
+                                      isBlockActive
+                                        ? `${activeStyles} font-bold`
+                                        : 'bg-black/20 border-white/5 text-slate-400 hover:text-slate-200 hover:border-white/10 hover:bg-white/5'
+                                    }`}
+                                  >
+                                    <span className="font-display text-sm">{block.label}</span>
+                                    <span className="text-[9px] font-mono uppercase tracking-wider opacity-80">{block.phase}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
-                          
+
+                          {/* Specific Week Selector within the block */}
+                          <div className="space-y-2 bg-black/15 border border-white/5 rounded-xl p-3.5 backdrop-blur-sm">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-mono mb-1.5">
+                              Settimana Specifica nel Blocco:
+                            </span>
+                            <div className="flex gap-2">
+                              {(() => {
+                                // Find current block range
+                                const currentBlock = [
+                                  [1, 2, 3, 4],
+                                  [5, 6, 7, 8],
+                                  [9, 10, 11, 12]
+                                ].find(range => range.includes(currentWeek)) || [1, 2, 3, 4];
+
+                                return currentBlock.map((w) => {
+                                  const isSelected = w === currentWeek;
+                                  return (
+                                    <button
+                                      key={w}
+                                      type="button"
+                                      onClick={() => setCurrentWeek(w)}
+                                      className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-bold border transition-all ${
+                                        isSelected
+                                          ? 'bg-blue-500/20 text-blue-300 border-blue-500/45 shadow-sm'
+                                          : 'bg-black/35 border-white/5 text-slate-400 hover:text-slate-200 hover:border-white/15'
+                                      }`}
+                                    >
+                                      Settimana {w}
+                                    </button>
+                                  );
+                                });
+                              })()}
+                            </div>
+                          </div>
+
                           {/* Selected Week Phase info */}
                           <div className="bg-black/20 border border-white/5 rounded-xl p-3.5 flex items-start gap-3 mt-1 backdrop-blur-sm">
                             <Info size={16} className="text-blue-400 shrink-0 mt-0.5" />
@@ -925,7 +1102,7 @@ export default function App() {
                       
                       {/* Session details banner */}
                       <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xl">
-                        <div className="space-y-1">
+                        <div className="space-y-1.5 max-w-md">
                           <div className="flex items-center gap-2 text-xs font-mono font-bold text-blue-400">
                             <span>FASE {activeSession.phase.toUpperCase()}</span>
                             <span>•</span>
@@ -936,6 +1113,9 @@ export default function App() {
                           <h2 className="text-xl font-bold font-display text-slate-100">
                             {activeSession.dayName}
                           </h2>
+                          <p className="text-xs text-slate-400 leading-relaxed font-light">
+                            {getPhaseInfo(activeSession.week).description}
+                          </p>
                         </div>
 
                         <div className="flex gap-4 font-mono text-xs">
@@ -950,46 +1130,7 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* Program overview hint */}
-                      <div className="bg-blue-500/10 border border-blue-500/25 rounded-2xl p-5 space-y-2 backdrop-blur-sm">
-                        <h4 className="font-bold text-slate-200 text-xs flex items-center gap-1.5 text-blue-400 uppercase tracking-wide font-mono">
-                          <Info size={14} />
-                          Fase {activeSession.phase}
-                        </h4>
-                        <p className="text-xs text-slate-400 leading-relaxed font-light">
-                          {getPhaseInfo(activeSession.week).description}
-                        </p>
-                      </div>
 
-                        {/* WARMUP CHECKLIST DRAWER (Active) */}
-                        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 space-y-3 shadow-xl">
-                          <div className="flex justify-between items-center">
-                            <h3 className="font-bold text-sm text-slate-200 flex items-center gap-2 font-mono">
-                              <Flame size={16} className="text-amber-500" />
-                              Completa il Riscaldamento (Consigliato: 7')
-                            </h3>
-                            <span className="text-[10px] text-slate-400 font-mono">
-                              {checkedWarmup.filter(Boolean).length}/{checkedWarmup.length} completati
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                            {currentWorkoutTemplate?.warmup.map((wu, idx) => (
-                              <button
-                                key={idx}
-                                onClick={() => handleWarmupToggle(idx)}
-                                className={`p-3 rounded-xl border text-center text-xs transition-all ${
-                                  checkedWarmup[idx]
-                                    ? 'bg-amber-500/10 border-amber-500/30 text-slate-200 backdrop-blur-sm font-semibold'
-                                    : 'bg-black/30 border-white/5 text-slate-400 hover:border-white/10'
-                                }`}
-                              >
-                                <span className={checkedWarmup[idx] ? 'line-through text-slate-500 font-light' : ''}>
-                                  {wu}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
 
                         {/* CIRCUIT LOGGING ENGINE (SPECIAL Weeks 9-12 Day C) */}
                         {currentWorkoutTemplate?.isCircuit ? (
@@ -1074,117 +1215,179 @@ export default function App() {
                           <div className="space-y-6">
                             {activeSession.exercises.map((ex, exIdx) => {
                               const template = currentWorkoutTemplate?.exercises[exIdx];
+                              const isCompleted = ex.sets.length > 0 && ex.sets.every(set => set.completed);
+                              const isExpanded = !isCompleted || !!manuallyExpanded[ex.exerciseId];
                               
                               return (
                                 <div
                                   key={ex.exerciseId}
-                                  className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 md:p-6 space-y-4 shadow-xl"
+                                  id={`exercise-card-${exIdx}`}
+                                  className="transition-all duration-300"
                                 >
-                                  {/* Exercise title & details */}
-                                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-white/10 pb-3">
-                                    <div>
-                                      <h3 className="font-bold text-slate-100 text-base font-display">{ex.exerciseName}</h3>
-                                      <p className="text-xs text-slate-400 font-light leading-relaxed mt-0.5">{template?.notes}</p>
-                                    </div>
-                                    <div className="flex gap-2 font-mono text-[10px] shrink-0 mt-1 sm:mt-0">
-                                      <span className="px-2 py-0.5 bg-blue-500/15 text-blue-300 border border-blue-500/20 rounded">
-                                        Target: {template?.targetSets}x{template?.targetReps}
-                                      </span>
-                                      <span className="px-2 py-0.5 bg-white/5 text-slate-350 border border-white/10 rounded">
-                                        Recupero: {template?.restSeconds}s
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  {/* Sets list */}
-                                  <div className="space-y-3">
-                                    {ex.sets.map((set, setIdx) => (
-                                      <div
-                                        key={setIdx}
-                                        className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${
-                                          set.completed
-                                            ? 'bg-emerald-500/10 border-emerald-500/30'
-                                            : 'bg-black/20 border-white/5'
-                                        }`}
-                                      >
-                                        <div className="flex items-center gap-3">
-                                          <span className={`w-7 h-7 rounded-lg font-mono font-bold text-xs flex items-center justify-center border ${
-                                            set.completed
-                                              ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-450'
-                                              : 'bg-white/5 border-white/10 text-slate-400'
-                                          }`}>
-                                            {setIdx + 1}
-                                          </span>
-                                          <span className="text-xs font-semibold text-slate-350">Serie {setIdx + 1}</span>
+                                  {!isExpanded ? (
+                                    /* COMPACT COLLAPSED CARD */
+                                    <div className="bg-emerald-950/20 backdrop-blur-md border border-emerald-500/20 rounded-2xl p-4 shadow-lg flex items-center justify-between gap-4 transition-all duration-300">
+                                      <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-450 flex items-center justify-center shrink-0 border border-emerald-500/30">
+                                          <Check size={16} strokeWidth={3} />
                                         </div>
-
-                                        <div className="flex items-center gap-6 justify-between sm:justify-end">
-                                          {/* Reps Controller */}
-                                          <div className="space-y-1">
-                                            <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wide block font-mono">Ripetizioni</span>
-                                            <div className="flex items-center gap-1.5 bg-black/30 border border-white/10 rounded-lg p-1">
-                                              <button
-                                                onClick={() => updateSet(exIdx, setIdx, { reps: Math.max(0, set.reps - 1) })}
-                                                className="p-1 hover:bg-white/10 rounded text-slate-400 hover:text-slate-200"
-                                              >
-                                                <Minus size={12} />
-                                              </button>
-                                              <input
-                                                type="number"
-                                                value={set.reps}
-                                                onChange={(e) => updateSet(exIdx, setIdx, { reps: parseInt(e.target.value, 10) || 0 })}
-                                                className="w-10 text-center bg-transparent focus:outline-none font-mono text-xs font-bold text-slate-200"
-                                              />
-                                              <button
-                                                onClick={() => updateSet(exIdx, setIdx, { reps: set.reps + 1 })}
-                                                className="p-1 hover:bg-white/10 rounded text-slate-400 hover:text-slate-200"
-                                              >
-                                                <Plus size={12} />
-                                              </button>
-                                            </div>
-                                          </div>
-
-                                          {/* Weight Controller */}
-                                          <div className="space-y-1">
-                                            <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wide block font-mono">Zavorra (kg)</span>
-                                            <div className="flex items-center gap-1.5 bg-black/30 border border-white/10 rounded-lg p-1">
-                                              <button
-                                                onClick={() => updateSet(exIdx, setIdx, { weight: Math.max(0, parseFloat((set.weight - 1).toFixed(1))) })}
-                                                className="p-1 hover:bg-white/10 rounded text-slate-400 hover:text-slate-200"
-                                              >
-                                                <Minus size={12} />
-                                              </button>
-                                              <input
-                                                type="number"
-                                                step="0.5"
-                                                value={set.weight}
-                                                onChange={(e) => updateSet(exIdx, setIdx, { weight: parseFloat(e.target.value) || 0 })}
-                                                className="w-12 text-center bg-transparent focus:outline-none font-mono text-xs font-bold text-slate-200"
-                                              />
-                                              <button
-                                                onClick={() => updateSet(exIdx, setIdx, { weight: parseFloat((set.weight + 1).toFixed(1)) })}
-                                                className="p-1 hover:bg-white/10 rounded text-slate-400 hover:text-slate-200"
-                                              >
-                                                <Plus size={12} />
-                                              </button>
-                                            </div>
-                                          </div>
-
-                                          {/* Set Completion button */}
-                                          <button
-                                            onClick={() => updateSet(exIdx, setIdx, { completed: !set.completed })}
-                                            className={`p-2.5 rounded-lg border font-bold flex items-center justify-center transition ${
-                                              set.completed
-                                                ? 'bg-emerald-500 text-slate-950 border-emerald-500 shadow-md shadow-emerald-500/10'
-                                                : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
-                                            }`}
-                                          >
-                                            <Check size={14} strokeWidth={3} />
-                                          </button>
+                                        <div className="min-w-0">
+                                          <h3 className="font-bold text-slate-150 text-sm sm:text-base font-display truncate">
+                                            {ex.exerciseName}
+                                          </h3>
+                                          <p className="text-xs text-slate-400 font-light mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 items-center">
+                                            <span>{ex.sets.length} serie completate</span>
+                                            <span className="text-slate-500">•</span>
+                                            <span className="font-mono text-emerald-400 font-medium text-[11px]">
+                                              {ex.sets.map(s => `${s.reps}${s.weight > 0 ? `+${s.weight}kg` : ''}`).join(' | ')}
+                                            </span>
+                                          </p>
                                         </div>
                                       </div>
-                                    ))}
-                                  </div>
+                                      <button
+                                        onClick={() => setManuallyExpanded(prev => ({ ...prev, [ex.exerciseId]: true }))}
+                                        className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 rounded-xl transition-all shrink-0 flex items-center gap-1.5 shadow-sm"
+                                      >
+                                        <Edit3 size={12} />
+                                        <span>Modifica</span>
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    /* FULL DETAILED CARD */
+                                    <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 md:p-6 space-y-4 shadow-xl">
+                                      {/* Exercise title & details */}
+                                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-white/10 pb-3">
+                                        <div>
+                                          <div className="flex items-center gap-2.5">
+                                            <h3 className="font-bold text-slate-100 text-base font-display">{ex.exerciseName}</h3>
+                                            {isCompleted && (
+                                              <span className="px-2 py-0.5 bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-[10px] font-bold rounded-full uppercase tracking-wider font-mono">
+                                                Completato
+                                              </span>
+                                            )}
+                                          </div>
+                                          <p className="text-xs text-slate-400 font-light leading-relaxed mt-0.5">{template?.notes}</p>
+                                        </div>
+                                        <div className="flex gap-2 font-mono text-[10px] shrink-0 mt-1 sm:mt-0 items-center">
+                                          <span className="px-2 py-0.5 bg-blue-500/15 text-blue-300 border border-blue-500/20 rounded">
+                                            Target: {template?.targetSets}x{template?.targetReps}
+                                          </span>
+                                          <span className="px-2 py-0.5 bg-amber-500/15 text-amber-300 border border-amber-500/20 rounded font-mono text-[10px]">
+                                            Diff: {template?.difficulty ?? 1}
+                                          </span>
+                                          <span className="px-2 py-0.5 bg-white/5 text-slate-350 border border-white/10 rounded">
+                                            Recupero: {template?.restSeconds}s
+                                          </span>
+                                          {isCompleted && (
+                                            <button
+                                              onClick={() => setManuallyExpanded(prev => ({ ...prev, [ex.exerciseId]: false }))}
+                                              className="ml-1 px-2.5 py-0.5 bg-slate-500/15 hover:bg-slate-500/25 border border-slate-500/20 text-slate-300 text-[10px] font-semibold rounded transition flex items-center gap-1"
+                                              title="Comprimi scheda"
+                                            >
+                                              Comprimi
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      {/* Sets list */}
+                                      <div className="space-y-3">
+                                        {ex.sets.map((set, setIdx) => (
+                                          <div
+                                            key={setIdx}
+                                            className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${
+                                              set.completed
+                                                ? 'bg-emerald-500/10 border-emerald-500/30'
+                                                : 'bg-black/20 border-white/5'
+                                            }`}
+                                          >
+                                            <div className="flex items-center gap-3">
+                                              <span className={`w-7 h-7 rounded-lg font-mono font-bold text-xs flex items-center justify-center border ${
+                                                set.completed
+                                                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-450'
+                                                  : 'bg-white/5 border-white/10 text-slate-400'
+                                              }`}>
+                                                {setIdx + 1}
+                                              </span>
+                                              <span className="text-xs font-semibold text-slate-350">Serie {setIdx + 1}</span>
+                                              {set.completed && (
+                                                <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded shadow-sm shrink-0" title="Punteggio di Forza Stimato">
+                                                  Forza: {parseFloat(((personalWeight + set.weight) * (1 + ((template?.isIsometric ? (set.reps / 2.5) : set.reps) / 30)) * (template?.difficulty ?? 1)).toFixed(1))} pt
+                                                </span>
+                                              )}
+                                            </div>
+
+                                            <div className="flex items-center gap-6 justify-between sm:justify-end">
+                                              {/* Reps Controller */}
+                                              <div className="space-y-1">
+                                                <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wide block font-mono">
+                                                  {template?.isIsometric ? 'Secondi' : 'Ripetizioni'}
+                                                </span>
+                                                <div className="flex items-center gap-1.5 bg-black/30 border border-white/10 rounded-lg p-1">
+                                                  <button
+                                                    onClick={() => updateSet(exIdx, setIdx, { reps: Math.max(0, set.reps - 1) })}
+                                                    className="p-1 hover:bg-white/10 rounded text-slate-400 hover:text-slate-200"
+                                                  >
+                                                    <Minus size={12} />
+                                                  </button>
+                                                  <input
+                                                    type="number"
+                                                    value={set.reps}
+                                                    onChange={(e) => updateSet(exIdx, setIdx, { reps: parseInt(e.target.value, 10) || 0 })}
+                                                    className="w-10 text-center bg-transparent focus:outline-none font-mono text-xs font-bold text-slate-200"
+                                                  />
+                                                  <button
+                                                    onClick={() => updateSet(exIdx, setIdx, { reps: set.reps + 1 })}
+                                                    className="p-1 hover:bg-white/10 rounded text-slate-400 hover:text-slate-200"
+                                                  >
+                                                    <Plus size={12} />
+                                                  </button>
+                                                </div>
+                                              </div>
+
+                                              {/* Weight Controller */}
+                                              <div className="space-y-1">
+                                                <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wide block font-mono">Zavorra (kg)</span>
+                                                <div className="flex items-center gap-1.5 bg-black/30 border border-white/10 rounded-lg p-1">
+                                                  <button
+                                                    onClick={() => updateSet(exIdx, setIdx, { weight: Math.max(0, parseFloat((set.weight - 1).toFixed(1))) })}
+                                                    className="p-1 hover:bg-white/10 rounded text-slate-400 hover:text-slate-200"
+                                                  >
+                                                    <Minus size={12} />
+                                                  </button>
+                                                  <input
+                                                    type="number"
+                                                    step="0.5"
+                                                    value={set.weight}
+                                                    onChange={(e) => updateSet(exIdx, setIdx, { weight: parseFloat(e.target.value) || 0 })}
+                                                    className="w-12 text-center bg-transparent focus:outline-none font-mono text-xs font-bold text-slate-200"
+                                                  />
+                                                  <button
+                                                    onClick={() => updateSet(exIdx, setIdx, { weight: parseFloat((set.weight + 1).toFixed(1)) })}
+                                                    className="p-1 hover:bg-white/10 rounded text-slate-400 hover:text-slate-200"
+                                                  >
+                                                    <Plus size={12} />
+                                                  </button>
+                                                </div>
+                                              </div>
+
+                                              {/* Set Completion button */}
+                                              <button
+                                                onClick={() => updateSet(exIdx, setIdx, { completed: !set.completed })}
+                                                className={`p-2.5 rounded-lg border font-bold flex items-center justify-center transition ${
+                                                  set.completed
+                                                    ? 'bg-emerald-500 text-slate-950 border-emerald-500 shadow-md shadow-emerald-500/10'
+                                                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
+                                                }`}
+                                              >
+                                                <Check size={14} strokeWidth={3} />
+                                              </button>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })}
@@ -1192,7 +1395,7 @@ export default function App() {
                         )}
 
                         {/* Session Notes & Action Section */}
-                        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 space-y-4 shadow-xl">
+                        <div id="session-notes-section" className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 space-y-4 shadow-xl">
                           <div className="space-y-1.5">
                             <h3 className="font-bold text-sm text-slate-200 uppercase tracking-wide font-mono">Note della sessione</h3>
                             <p className="text-xs text-slate-450">Scrivi com'è andato l'allenamento (es. sensazioni, facilità delle rep, meteo, dolori)</p>
@@ -1242,6 +1445,7 @@ export default function App() {
               {activeTab === 'statistiche' && (
                 <Stats
                   sessions={sessions}
+                  workoutProgram={workoutProgram}
                   onGenerateMockData={handleGenerateMockData}
                   onClearData={handleClearAllData}
                 />
@@ -1358,6 +1562,9 @@ export default function App() {
                                             +{ex.defaultWeight} kg
                                           </span>
                                         )}
+                                        <span className="text-[9px] text-amber-500/90 mt-0.5" title="Fattore di Difficoltà">
+                                          Diff: {ex.difficulty ?? 1}
+                                        </span>
                                       </div>
                                     </div>
                                   ))}
@@ -1443,7 +1650,7 @@ export default function App() {
                                         </button>
                                       </div>
 
-                                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                                         <div className="space-y-1">
                                           <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block font-mono">Tipo Esercizio</label>
                                           <select
@@ -1512,6 +1719,32 @@ export default function App() {
                                             />
                                             <button
                                               onClick={() => handleUpdateExercise(blockIdx, dIdx, exIdx, { defaultWeight: ex.defaultWeight + 1 })}
+                                              className="p-1 hover:bg-white/10 rounded text-slate-400 transition-colors"
+                                            >
+                                              <Plus size={11} />
+                                            </button>
+                                          </div>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                          <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block font-mono">Difficoltà</label>
+                                          <div className="flex items-center justify-between bg-slate-900 border border-white/10 rounded-lg p-1">
+                                            <button
+                                              onClick={() => handleUpdateExercise(blockIdx, dIdx, exIdx, { difficulty: Math.max(0.1, parseFloat(((ex.difficulty ?? 1) - 0.1).toFixed(1))) })}
+                                              className="p-1 hover:bg-white/10 rounded text-slate-400 transition-colors"
+                                            >
+                                              <Minus size={11} />
+                                            </button>
+                                            <input
+                                              type="number"
+                                              step="0.1"
+                                              min="0.1"
+                                              value={ex.difficulty ?? 1}
+                                              onChange={(e) => handleUpdateExercise(blockIdx, dIdx, exIdx, { difficulty: parseFloat(e.target.value) || 1 })}
+                                              className="w-10 text-center bg-transparent focus:outline-none font-mono text-xs font-bold text-slate-200"
+                                            />
+                                            <button
+                                              onClick={() => handleUpdateExercise(blockIdx, dIdx, exIdx, { difficulty: parseFloat(((ex.difficulty ?? 1) + 0.1).toFixed(1)) })}
                                               className="p-1 hover:bg-white/10 rounded text-slate-400 transition-colors"
                                             >
                                               <Plus size={11} />
