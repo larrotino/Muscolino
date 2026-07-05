@@ -2,8 +2,8 @@ name: Build and Push to Docker Hub
 
 on:
   push:
-    branches: [ "main" ] # Il flusso parte quando fai un push sul branch main
-
+    branches: [ "main" ]
+    tags: [ 'v*.*.*' ] # Intercetta tag come v1.0.0, v2.1.3, ecc.
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
