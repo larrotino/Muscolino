@@ -599,9 +599,26 @@ export default function App() {
   const saveWorkout = () => {
     if (!activeSession) return;
 
+    // Save uncompleted sets with 0 reps and 0 weight
+    const processedExercises = activeSession.exercises.map(ex => ({
+      ...ex,
+      sets: ex.sets.map(set => {
+        if (!set.completed) {
+          return {
+            ...set,
+            reps: 0,
+            weight: 0,
+            completed: false
+          };
+        }
+        return set;
+      })
+    }));
+
     const finalDuration = Math.max(1, Math.round(sessionDurationSecs / 60));
     const completedSession: WorkoutSession = {
       ...activeSession,
+      exercises: processedExercises,
       durationMinutes: finalDuration,
       notes: workoutNotes,
       completed: true,
@@ -1548,10 +1565,10 @@ export default function App() {
                                 
                                 <div className="space-y-2.5">
                                   {d.exercises.map((ex, exIdx) => (
-                                    <div key={exIdx} className="flex justify-between items-start text-xs text-slate-300 py-0.5 border-b border-white/[0.02] last:border-b-0">
+                                    <div key={exIdx} className="flex justify-between items-start text-xs text-slate-300 py-1 border-b border-white/[0.02] last:border-b-0">
                                       <div className="flex flex-col min-w-0 pr-2">
-                                        <span className="font-medium text-slate-200 truncate">{ex.name}</span>
-                                        {ex.notes && <span className="text-[10px] text-slate-500 italic truncate max-w-[170px]">{ex.notes}</span>}
+                                        <span className="font-medium text-slate-200">{ex.name}</span>
+                                        {ex.notes && <span className="text-[10px] text-slate-400 italic mt-0.5 block leading-normal">{ex.notes}</span>}
                                       </div>
                                       <div className="shrink-0 flex flex-col items-end font-mono">
                                         <span className="font-bold text-blue-300 text-[10px]">
