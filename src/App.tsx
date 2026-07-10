@@ -1555,38 +1555,75 @@ export default function App() {
 
                         {/* Days overview (Read-only view vs Edit view) */}
                         {!isEditingProgram ? (
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-0 md:pl-11">
+                          <div className="flex flex-col gap-6 pl-0 md:pl-11">
                             {p.days.map((d, dIdx) => (
-                              <div key={dIdx} className="bg-black/20 border border-white/5 rounded-xl p-4 space-y-3 shadow-md">
-                                <h4 className="font-bold text-blue-400 text-sm border-b border-white/5 pb-1.5 flex items-center justify-between font-display">
-                                  <span>Giorno {d.day}</span>
-                                  <span className="text-[10px] text-slate-400 font-mono capitalize">{d.name}</span>
+                              <div key={dIdx} className="bg-black/20 border border-white/5 rounded-2xl p-5 space-y-4 shadow-md backdrop-blur-sm">
+                                <h4 className="font-bold text-blue-400 text-sm border-b border-white/10 pb-2.5 flex items-center justify-between font-display">
+                                  <span className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+                                    Giorno {d.day}
+                                  </span>
+                                  <span className="text-[10px] sm:text-xs text-slate-350 font-mono uppercase bg-white/5 px-2.5 py-0.5 rounded-lg border border-white/5 tracking-wider">{d.name}</span>
                                 </h4>
                                 
-                                <div className="space-y-2.5">
+                                <div className="divide-y divide-white/[0.05]">
                                   {d.exercises.map((ex, exIdx) => (
-                                    <div key={exIdx} className="flex justify-between items-start text-xs text-slate-300 py-1 border-b border-white/[0.02] last:border-b-0">
-                                      <div className="flex flex-col min-w-0 pr-2">
-                                        <span className="font-medium text-slate-200">{ex.name}</span>
-                                        {ex.notes && <span className="text-[10px] text-slate-400 italic mt-0.5 block leading-normal">{ex.notes}</span>}
+                                    <div key={exIdx} className="flex flex-col gap-3 py-4.5 first:pt-2 last:pb-2">
+                                      {/* RIGA 1: Nome dell'esercizio */}
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-mono font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">
+                                          #{exIdx + 1}
+                                        </span>
+                                        <span className="font-bold text-slate-100 text-sm sm:text-base">{ex.name}</span>
                                       </div>
-                                      <div className="shrink-0 flex flex-col items-end font-mono">
-                                        <span className="font-bold text-blue-300 text-[10px]">
-                                          {ex.targetSets}x{ex.targetReps}
-                                        </span>
-                                        {ex.defaultWeight > 0 && (
-                                          <span className="text-[9px] text-emerald-400">
-                                            +{ex.defaultWeight} kg
+
+                                      {/* RIGA 2: Dati tecnici dell'esercizio */}
+                                      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-xs text-slate-300 pl-1">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-slate-500 text-[9px] uppercase tracking-wider font-sans">Serie/Rip:</span>
+                                          <span className="font-extrabold text-blue-300 bg-blue-500/5 px-2 py-0.5 rounded border border-blue-500/10">
+                                            {ex.targetSets}x{ex.targetReps}
                                           </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-1.5 sm:border-l sm:border-white/10 sm:pl-4">
+                                          <span className="text-slate-500 text-[9px] uppercase tracking-wider font-sans">Carico:</span>
+                                          <span className="font-extrabold text-emerald-400 bg-emerald-500/5 px-2 py-0.5 rounded border border-emerald-500/10">
+                                            {ex.defaultWeight > 0 ? `+${ex.defaultWeight}kg` : 'Corpo Lib.'}
+                                          </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-1.5 border-l border-white/10 pl-4">
+                                          <span className="text-slate-500 text-[9px] uppercase tracking-wider font-sans">Difficoltà:</span>
+                                          <span className="font-bold text-amber-400 bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/10">
+                                            x{ex.difficulty ?? 1}
+                                          </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-1.5 border-l border-white/10 pl-4">
+                                          <span className="text-slate-500 text-[9px] uppercase tracking-wider font-sans">Recupero:</span>
+                                          <span className="font-bold text-slate-300 bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                                            {ex.restSeconds ? `${ex.restSeconds}s` : '---'}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      {/* RIGA 3: Descrizione dell'esercizio */}
+                                      <div className="pl-1">
+                                        {ex.notes ? (
+                                          <p className="text-xs text-slate-400 leading-relaxed border-l-2 border-slate-500/20 pl-3 italic">
+                                            {ex.notes}
+                                          </p>
+                                        ) : (
+                                          <p className="text-xs text-slate-500/80 leading-relaxed pl-3 italic">
+                                            Nessuna nota aggiuntiva disponibile.
+                                          </p>
                                         )}
-                                        <span className="text-[9px] text-amber-500/90 mt-0.5" title="Fattore di Difficoltà">
-                                          Diff: {ex.difficulty ?? 1}
-                                        </span>
                                       </div>
                                     </div>
                                   ))}
                                   {d.exercises.length === 0 && (
-                                    <p className="text-xs text-slate-500 italic text-center py-2">Nessun esercizio</p>
+                                    <p className="text-xs text-slate-500 italic text-center py-4">Nessun esercizio registrato</p>
                                   )}
                                 </div>
                               </div>

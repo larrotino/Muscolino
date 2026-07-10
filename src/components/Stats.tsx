@@ -124,10 +124,10 @@ export default function Stats({ sessions, workoutProgram, onGenerateMockData, on
     return `M ${points.join(' L ')}`;
   };
 
-  // SVG dimensions
-  const chartWidth = 600;
-  const chartHeight = 250;
-  const chartPadding = 45;
+  // SVG dimensions for wide horizontal charts
+  const chartWidth = 800;
+  const chartHeight = 320;
+  const chartPadding = 60;
 
   return (
     <div id="stats-dashboard" className="space-y-8">
@@ -213,15 +213,15 @@ export default function Stats({ sessions, workoutProgram, onGenerateMockData, on
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="flex flex-col gap-8 w-full">
           {/* Chart 1: Personal Weight over time */}
           <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pb-2 border-b border-white/5">
               <div className="space-y-1">
-                <h4 className="font-bold text-slate-200 text-base font-display">Andamento Peso Personale</h4>
+                <h4 className="font-bold text-slate-200 text-lg font-display">Andamento Peso Personale</h4>
                 <p className="text-xs text-slate-450">Traccia il peso corporeo registrato all'inizio di ogni sessione</p>
               </div>
-              <span className="text-xs font-mono font-bold px-2.5 py-1 bg-rose-500/10 text-rose-300 rounded-lg border border-rose-500/25">
+              <span className="text-xs font-mono font-bold px-3 py-1 bg-rose-500/10 text-rose-300 rounded-lg border border-rose-500/25">
                 kg
               </span>
             </div>
@@ -239,7 +239,7 @@ export default function Stats({ sessions, workoutProgram, onGenerateMockData, on
                     const y = chartHeight - chartPadding - ratio * (chartHeight - chartPadding * 2);
 
                     return (
-                      <g key={idx} className="opacity-40">
+                      <g key={idx}>
                         <line
                           x1={chartPadding}
                           y1={y}
@@ -250,9 +250,9 @@ export default function Stats({ sessions, workoutProgram, onGenerateMockData, on
                           strokeDasharray="4 4"
                         />
                         <text
-                          x={chartPadding - 8}
+                          x={chartPadding - 12}
                           y={y + 4}
-                          className="fill-slate-400 text-[10px] font-mono text-right"
+                          className="fill-slate-100 text-xs font-semibold font-mono text-right"
                           textAnchor="end"
                         >
                           {gridWeight.toFixed(1)}
@@ -281,41 +281,85 @@ export default function Stats({ sessions, workoutProgram, onGenerateMockData, on
 
                     return (
                       <g key={idx} className="group">
+                        {/* Vertical grid guide */}
+                        <line
+                          x1={x}
+                          y1={y}
+                          x2={x}
+                          y2={chartHeight - chartPadding}
+                          className="stroke-white/[0.08] group-hover:stroke-white/[0.25] transition-colors pointer-events-none"
+                          strokeDasharray="2 2"
+                        />
+                        
                         <circle
                           cx={x}
                           cy={y}
-                          r="5"
-                          className="fill-rose-400 stroke-black/50 cursor-pointer"
-                          strokeWidth="2"
+                          r="6"
+                          className="fill-rose-400 stroke-slate-950 cursor-pointer"
+                          strokeWidth="2.5"
                         />
-                        <rect
-                          x={x - 25}
-                          y={y - 28}
-                          width="50"
-                          height="20"
-                          rx="4"
-                          className="fill-black/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none stroke-white/10"
-                          strokeWidth="1"
-                        />
+
+                        {/* Persistent Weight Value above point */}
                         <text
                           x={x}
-                          y={y - 14}
-                          className="fill-slate-100 text-[10px] font-mono font-bold text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                          y={y - 12}
+                          className="fill-rose-300 text-[10px] sm:text-[11px] font-mono font-bold text-center select-none"
                           textAnchor="middle"
                         >
-                          {item.weight} kg
+                          {item.weight}
                         </text>
-                        {/* Date under the chart */}
-                        {idx === 0 || idx === weightHistory.length - 1 || (weightHistory.length < 8 && idx % 2 === 0) ? (
+
+                        {/* Hover Tooltip with Date */}
+                        <g className="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none duration-200">
+                          <rect
+                            x={x - 65}
+                            y={y - 56}
+                            width="130"
+                            height="38"
+                            rx="8"
+                            className="fill-slate-900/95 backdrop-blur-md stroke-white/20 shadow-2xl"
+                            strokeWidth="1"
+                          />
                           <text
                             x={x}
-                            y={chartHeight - 12}
-                            className="fill-slate-500 text-[9px] font-mono"
+                            y={y - 41}
+                            className="fill-rose-300 text-xs font-mono font-bold text-center"
                             textAnchor="middle"
                           >
-                            {item.date} (S{item.week}G{item.day})
+                            {item.weight} kg
                           </text>
-                        ) : null}
+                          <text
+                            x={x}
+                            y={y - 27}
+                            className="fill-slate-300 text-[9px] font-mono text-center"
+                            textAnchor="middle"
+                          >
+                            {item.date}
+                          </text>
+                        </g>
+
+                        {/* Date label under the chart (ONLY Week & Day reference) */}
+                        {(() => {
+                          const total = weightHistory.length;
+                          const showThis = total <= 15
+                            ? true
+                            : idx === 0 || idx === total - 1 || idx % Math.ceil(total / 12) === 0;
+
+                          if (!showThis) return null;
+
+                          return (
+                            <g>
+                              <text
+                                x={x}
+                                y={chartHeight - 12}
+                                className="fill-slate-200 text-[11px] font-bold font-mono"
+                                textAnchor="middle"
+                              >
+                                S{item.week}G{item.day}
+                              </text>
+                            </g>
+                          );
+                        })()}
                       </g>
                     );
                   })}
@@ -330,9 +374,9 @@ export default function Stats({ sessions, workoutProgram, onGenerateMockData, on
 
           {/* Chart 2: Exercise Performance / Vol */}
           <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 space-y-4 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/5">
               <div className="space-y-1">
-                <h4 className="font-bold text-slate-200 text-base font-display">Andamento Punteggio di Forza</h4>
+                <h4 className="font-bold text-slate-200 text-lg font-display">Andamento Punteggio di Forza</h4>
                 <p className="text-xs text-slate-450">Traccia il massimale stimato (1RM modificato) delle migliori serie</p>
               </div>
 
@@ -340,7 +384,7 @@ export default function Stats({ sessions, workoutProgram, onGenerateMockData, on
               <select
                 value={selectedExerciseFilter}
                 onChange={(e) => setSelectedExerciseFilter(e.target.value)}
-                className="bg-black/30 border border-white/10 text-xs text-slate-200 rounded-xl px-3 py-1.5 focus:outline-none focus:border-blue-500 transition"
+                className="bg-black/30 border border-white/15 text-xs font-semibold text-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500 transition shadow-sm cursor-pointer"
               >
                 {allLoggedExercises.length > 0 ? (
                   allLoggedExercises.map(exName => (
@@ -371,7 +415,7 @@ export default function Stats({ sessions, workoutProgram, onGenerateMockData, on
                     const y = chartHeight - chartPadding - ratio * (chartHeight - chartPadding * 2);
 
                     return (
-                      <g key={idx} className="opacity-40">
+                      <g key={idx}>
                         <line
                           x1={chartPadding}
                           y1={y}
@@ -382,9 +426,9 @@ export default function Stats({ sessions, workoutProgram, onGenerateMockData, on
                           strokeDasharray="4 4"
                         />
                         <text
-                          x={chartPadding - 8}
+                          x={chartPadding - 12}
                           y={y + 4}
-                          className="fill-slate-400 text-[10px] font-mono text-right"
+                          className="fill-slate-100 text-xs font-semibold font-mono text-right"
                           textAnchor="end"
                         >
                           {gridVal.toFixed(1)}
@@ -413,41 +457,93 @@ export default function Stats({ sessions, workoutProgram, onGenerateMockData, on
 
                     return (
                       <g key={idx} className="group">
+                        {/* Vertical grid guide */}
+                        <line
+                          x1={x}
+                          y1={y}
+                          x2={x}
+                          y2={chartHeight - chartPadding}
+                          className="stroke-white/[0.08] group-hover:stroke-white/[0.25] transition-colors pointer-events-none"
+                          strokeDasharray="2 2"
+                        />
+
                         <circle
                           cx={x}
                           cy={y}
-                          r="5"
-                          className="fill-amber-400 stroke-black/50 cursor-pointer"
-                          strokeWidth="2"
+                          r="6"
+                          className="fill-amber-400 stroke-slate-950 cursor-pointer"
+                          strokeWidth="2.5"
                         />
-                        <rect
-                          x={x - 45}
-                          y={y - 30}
-                          width="90"
-                          height="22"
-                          rx="4"
-                          className="fill-black/90 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none stroke-white/10 shadow-lg"
-                          strokeWidth="1"
-                        />
+
+                        {/* Persistent Strength Score above point */}
                         <text
                           x={x}
-                          y={y - 15}
-                          className="fill-amber-300 text-[9px] font-mono font-bold text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                          y={y - 12}
+                          className="fill-amber-300 text-[10px] sm:text-[11px] font-mono font-bold text-center select-none"
                           textAnchor="middle"
                         >
-                          {item.strengthScore} pt ({item.bestSetReps}{item.isIsometric ? 's' : ''} @ {item.bestSetWeight}kg)
+                          {item.strengthScore}
                         </text>
-                        {/* Date label under the chart */}
-                        {idx === 0 || idx === exerciseHistory.length - 1 || (exerciseHistory.length < 8 && idx % 2 === 0) ? (
+
+                        {/* Hover Tooltip with Date */}
+                        <g className="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none duration-200">
+                          <rect
+                            x={x - 75}
+                            y={y - 68}
+                            width="150"
+                            height="50"
+                            rx="8"
+                            className="fill-slate-900/95 backdrop-blur-md stroke-white/20 shadow-2xl"
+                            strokeWidth="1"
+                          />
                           <text
                             x={x}
-                            y={chartHeight - 12}
-                            className="fill-slate-500 text-[9px] font-mono"
+                            y={y - 52}
+                            className="fill-amber-300 text-xs font-mono font-bold text-center"
                             textAnchor="middle"
                           >
-                            {item.date} (S{item.week}G{item.day})
+                            {item.strengthScore} pt
                           </text>
-                        ) : null}
+                          <text
+                            x={x}
+                            y={y - 38}
+                            className="fill-slate-200 text-[10px] font-mono font-bold text-center"
+                            textAnchor="middle"
+                          >
+                            {item.bestSetReps}{item.isIsometric ? 's' : ' rep'} a {item.bestSetWeight}kg
+                          </text>
+                          <text
+                            x={x}
+                            y={y - 25}
+                            className="fill-slate-400 text-[9px] font-mono text-center"
+                            textAnchor="middle"
+                          >
+                            {item.date}
+                          </text>
+                        </g>
+
+                        {/* Date label under the chart (ONLY Week & Day reference) */}
+                        {(() => {
+                          const total = exerciseHistory.length;
+                          const showThis = total <= 15
+                            ? true
+                            : idx === 0 || idx === total - 1 || idx % Math.ceil(total / 12) === 0;
+
+                          if (!showThis) return null;
+
+                          return (
+                            <g>
+                              <text
+                                x={x}
+                                y={chartHeight - 12}
+                                className="fill-slate-200 text-[11px] font-bold font-mono"
+                                textAnchor="middle"
+                              >
+                                S{item.week}G{item.day}
+                              </text>
+                            </g>
+                          );
+                        })()}
                       </g>
                     );
                   })}
@@ -455,9 +551,9 @@ export default function Stats({ sessions, workoutProgram, onGenerateMockData, on
                 
                 {/* Legend */}
                 <div className="flex justify-center gap-6 text-xs pt-1">
-                  <div className="flex items-center gap-1.5 text-slate-400">
+                  <div className="flex items-center gap-1.5 text-slate-450">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                    <span className="text-slate-450 font-mono text-[10px]">Massimale Stimato Modificato (pt)</span>
+                    <span className="text-slate-450 font-mono text-[10px] uppercase tracking-wider">Massimale Stimato Modificato (pt)</span>
                   </div>
                 </div>
 
