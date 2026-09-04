@@ -6,8 +6,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Dumbbell, Calendar, BarChart2, BookOpen, Clock, Weight, Flame, 
-  Play, Square, Check, RotateCcw, Plus, Minus, Info, Settings,
+  Calendar, BookOpen, Weight, Flame, 
+  Play, Check, Plus, Minus, Info, 
   CheckCircle, ChevronRight, AlertCircle, Save, X, Sparkles, HelpCircle,
   Trash2, Edit3, Undo
 } from 'lucide-react';
@@ -15,45 +15,12 @@ import {
 import { WorkoutSession, DayTemplate, ExerciseTemplate, ExerciseLog, SetLog, Phase, WeekTemplate } from './types';
 import { WORKOUT_PROGRAM } from './workoutProgram';
 import Timer, { playTimerBeep } from './components/Timer';
-import Stats from './components/Stats';
 import History from './components/History';
-
-const PREDEFINED_EXERCISES = [
-  'Trazioni al mento',
-  'Trazioni alla sbarra',
-  'Trazioni zavorrate',
-  'Scapular Pull-up',
-  'Chin-up',
-  'Pull-up',
-  'Rematore con Manubrio',
-  'Australian Pull-up',
-  'Push-up',
-  'Push-up Zavorrati',
-  'Push-up Piedi Rialzati',
-  'Pike Push-up',
-  'Dip alle parallele',
-  'Squat a corpo libero',
-  'Bulgarian Split Squat',
-  'Goblet Squat',
-  'Affondi alternati',
-  'Romanian Deadlift',
-  'Stacco da terra (Deadlift)',
-  'Plank',
-  'Plank Monobraccio',
-  'Side Plank',
-  'Hollow Hold',
-  'Hanging Knee Raise',
-  'Hanging Leg Raise',
-  'Curl con Manubrio',
-  'Hammer Curl',
-  'Estensioni Tricipiti',
-  'Alzate Laterali',
-  'Altro (Personalizzato)...'
-];
+import appLogo from './assets/Icon.png';
 
 export default function App() {
   // Navigation & Persistent Preferences State
-  const [activeTab, setActiveTab] = useState<'allenamento' | 'cronologia' | 'statistiche' | 'scheda'>('allenamento');
+  const [activeTab, setActiveTab] = useState<'allenamento' | 'cronologia' | 'scheda'>('allenamento');
   const [currentWeek, setCurrentWeek] = useState<number>(1);
   const [currentDay, setCurrentDay] = useState<'A' | 'B' | 'C'>('A');
   const [personalWeight, setPersonalWeight] = useState<number>(75);
@@ -112,7 +79,7 @@ export default function App() {
     const newExId = `custom_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     updated[blockIdx].days[dIdx].exercises.push({
       id: newExId,
-      name: 'Trazioni al mento',
+      name: '',
       targetSets: 4,
       targetReps: '8',
       defaultWeight: 0,
@@ -719,101 +686,6 @@ export default function App() {
     fileReader.readAsText(files[0]);
   };
 
-  // Generate complete 12-week progressive demo data
-  const handleGenerateMockData = () => {
-    const mockSessions: WorkoutSession[] = [];
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 75); // Start ~11 weeks ago
-
-    const baseWeight = 76.5;
-
-    // We generate 20 completed mock sessions distributed over the past weeks
-    const sessionDetails = [
-      { week: 1, day: 'A' as const, dayName: 'Trazione + Gambe', weightDiff: 0, exReps: [5, 8, 10, 45, 20], exWeights: [0, 12, 12, 0, 0] },
-      { week: 1, day: 'B' as const, dayName: 'Spinta', weightDiff: -0.2, exReps: [12, 8, 12, 10, 40], exWeights: [0, 0, 12, 10, 0] },
-      { week: 1, day: 'C' as const, dayName: 'Full Body', weightDiff: -0.1, exReps: [6, 10, 10, 12, 12], exWeights: [0, 0, 0, 12, 0] },
-      
-      { week: 2, day: 'A' as const, dayName: 'Trazione + Gambe', weightDiff: -0.3, exReps: [5, 8, 10, 50, 22], exWeights: [0, 12, 12, 0, 0] },
-      { week: 2, day: 'B' as const, dayName: 'Spinta', weightDiff: -0.5, exReps: [13, 9, 12, 10, 40], exWeights: [0, 0, 12, 10, 0] },
-      
-      { week: 3, day: 'A' as const, dayName: 'Trazione + Gambe', weightDiff: -0.4, exReps: [5, 8, 10, 55, 25], exWeights: [0, 12, 12, 0, 0] },
-      { week: 3, day: 'C' as const, dayName: 'Full Body', weightDiff: -0.6, exReps: [7, 10, 10, 12, 12], exWeights: [0, 0, 0, 12, 0] },
-      
-      { week: 4, day: 'A' as const, dayName: 'Trazione + Gambe', weightDiff: -0.7, exReps: [5, 8, 10, 60, 30], exWeights: [0, 12, 12, 0, 0] },
-      { week: 4, day: 'B' as const, dayName: 'Spinta', weightDiff: -0.8, exReps: [15, 10, 12, 10, 40], exWeights: [0, 0, 12, 10, 0] },
-      
-      // Weeks 5-8: Intensità
-      { week: 5, day: 'A' as const, dayName: 'Trazione + Gambe', weightDiff: -1.0, exReps: [6, 8, 10, 45, 22, 45], exWeights: [0, 12, 12, 0, 0, 12] },
-      { week: 5, day: 'B' as const, dayName: 'Spinta', weightDiff: -1.2, exReps: [9, 8, 12, 10, 40], exWeights: [5, 0, 12, 10, 0] },
-      { week: 5, day: 'C' as const, dayName: 'Full Body', weightDiff: -1.1, exReps: [8, 10, 10, 12, 12], exWeights: [0, 0, 0, 12, 0] },
-      
-      { week: 6, day: 'A' as const, dayName: 'Trazione + Gambe', weightDiff: -1.3, exReps: [6, 8, 10, 50, 25, 45], exWeights: [2, 12, 12, 0, 0, 12] },
-      { week: 6, day: 'B' as const, dayName: 'Spinta', weightDiff: -1.4, exReps: [10, 9, 12, 10, 40], exWeights: [5, 0, 12, 10, 0] },
-      
-      { week: 7, day: 'A' as const, dayName: 'Trazione + Gambe', weightDiff: -1.6, exReps: [6, 8, 10, 55, 28, 45], exWeights: [4, 12, 12, 0, 0, 12] },
-      { week: 7, day: 'C' as const, dayName: 'Full Body', weightDiff: -1.5, exReps: [8, 10, 10, 12, 12], exWeights: [0, 0, 0, 12, 0] },
-      
-      // Weeks 9-12: Forza
-      { week: 9, day: 'A' as const, dayName: 'Forza Trazione + Gambe', weightDiff: -1.8, exReps: [4, 8, 10, 60, 25], exWeights: [6, 12, 14, 0, 0] },
-      { week: 9, day: 'B' as const, dayName: 'Forza Spinta', weightDiff: -2.0, exReps: [7, 9, 12, 10, 40], exWeights: [6, 0, 12, 12, 0] },
-      { week: 10, day: 'A' as const, dayName: 'Forza Trazione + Gambe', weightDiff: -2.1, exReps: [4, 8, 10, 60, 30], exWeights: [8, 12, 14, 0, 0] },
-      { week: 10, day: 'C' as const, dayName: 'Circuito Metabolico', weightDiff: -2.3, exReps: [5, 10, 10, 30], exWeights: [0, 0, 0, 0] }
-    ];
-
-    sessionDetails.forEach((detail, sIdx) => {
-      const { phase } = getPhaseInfo(detail.week);
-      const workoutDate = new Date(startDate);
-      // Increment date by ~3-4 days per workout
-      workoutDate.setDate(workoutDate.getDate() + sIdx * 3.5);
-
-      const template = workoutProgram
-        .find(p => p.weeks.includes(detail.week))
-        ?.days.find(d => d.day === detail.day);
-      if (!template) return;
-
-      const exerciseLogs: ExerciseLog[] = template.exercises.map((ex, exIdx) => {
-        const targetSets = template.isCircuit ? 3 : ex.targetSets;
-        const sets: SetLog[] = [];
-        
-        for (let i = 0; i < targetSets; i++) {
-          sets.push({
-            reps: detail.exReps[exIdx] || 8,
-            weight: detail.exWeights[exIdx] || ex.defaultWeight,
-            completed: true
-          });
-        }
-
-        return {
-          exerciseId: ex.id,
-          exerciseName: ex.name,
-          sets
-        };
-      });
-
-      mockSessions.push({
-        id: `mock_${detail.week}_${detail.day}_${sIdx}`,
-        date: workoutDate.toISOString(),
-        week: detail.week,
-        phase,
-        day: detail.day,
-        dayName: template.name,
-        personalWeight: parseFloat((baseWeight + detail.weightDiff).toFixed(1)),
-        exercises: exerciseLogs,
-        durationMinutes: 45 + Math.floor(Math.random() * 15),
-        notes: `Ottima sessione di allenamento della fase ${phase}! Sentite buone sensazioni e incremento graduale dei carichi.`,
-        completed: true
-      });
-    });
-
-    setSessions(mockSessions);
-    localStorage.setItem('workout_sessions', JSON.stringify(mockSessions));
-    setNotification({
-      message: "Dati demo generati con successo! Controlla ora la tab 'Statistiche' o 'Cronologia'.",
-      type: 'success'
-    });
-    setActiveTab('statistiche');
-  };
-
   // Render Time elapsed (active workout)
   const formatDuration = (totalSecs: number) => {
     const hrs = Math.floor(totalSecs / 3600);
@@ -844,10 +716,16 @@ export default function App() {
         <div className="flex items-center gap-3">
           <div className="p-1 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-lg shadow-blue-500/20 flex items-center justify-center overflow-hidden w-11 h-11">
             <img 
-              src="/Icon.png" 
+              src={appLogo} 
               alt="Muscolino Logo" 
               className="w-9 h-9 object-cover rounded-lg" 
               referrerPolicy="no-referrer"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (target.src !== window.location.origin + '/Icon.png') {
+                  target.src = '/Icon.png';
+                }
+              }}
             />
           </div>
           <div>
@@ -902,18 +780,6 @@ export default function App() {
           >
             <Calendar size={16} />
             <span>Cronologia</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('statistiche')}
-            className={`flex-1 py-2 px-3 sm:py-2.5 sm:px-4 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all border shrink-0 ${
-              activeTab === 'statistiche'
-                ? 'bg-white/10 text-blue-400 border-white/15 backdrop-blur-sm shadow-md'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border-transparent'
-            }`}
-          >
-            <BarChart2 size={16} />
-            <span>Statistiche</span>
           </button>
 
           <button
@@ -1458,17 +1324,7 @@ export default function App() {
                 />
               )}
 
-              {/* TAB 3: STATS (STATISTICHE) */}
-              {activeTab === 'statistiche' && (
-                <Stats
-                  sessions={sessions}
-                  workoutProgram={workoutProgram}
-                  onGenerateMockData={handleGenerateMockData}
-                  onClearData={handleClearAllData}
-                />
-              )}
-
-              {/* TAB 4: EDUCATIONAL (SCHEDA DETTAGLIATA) */}
+              {/* TAB 3: EDUCATIONAL (SCHEDA DETTAGLIATA) */}
               {activeTab === 'scheda' && (
                 <div className="space-y-8 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 md:p-8 shadow-xl">
                   {/* Header & Editing Controls */}
@@ -1663,36 +1519,13 @@ export default function App() {
                                       <div className="flex items-center justify-between gap-4">
                                         <div className="flex-1 space-y-1">
                                           <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block font-mono">Nome Esercizio</label>
-                                          <div className="flex flex-col sm:flex-row gap-2">
-                                            <select
-                                              value={PREDEFINED_EXERCISES.includes(ex.name) ? ex.name : 'Altro (Personalizzato)...'}
-                                              onChange={(e) => {
-                                                const val = e.target.value;
-                                                if (val === 'Altro (Personalizzato)...') {
-                                                  handleUpdateExercise(blockIdx, dIdx, exIdx, { name: 'Nuovo Esercizio' });
-                                                } else {
-                                                  handleUpdateExercise(blockIdx, dIdx, exIdx, { name: val });
-                                                }
-                                              }}
-                                              className="flex-1 bg-slate-900 border border-white/10 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs text-slate-200"
-                                            >
-                                              {PREDEFINED_EXERCISES.map((option) => (
-                                                <option key={option} value={option} className="bg-slate-900 text-slate-200">
-                                                  {option}
-                                                </option>
-                                              ))}
-                                            </select>
-
-                                            {(!PREDEFINED_EXERCISES.includes(ex.name) || ex.name === 'Nuovo Esercizio') && (
-                                              <input
-                                                type="text"
-                                                value={ex.name === 'Altro (Personalizzato)...' ? '' : ex.name}
-                                                onChange={(e) => handleUpdateExercise(blockIdx, dIdx, exIdx, { name: e.target.value })}
-                                                placeholder="Nome personalizzato"
-                                                className="flex-1 bg-slate-900 border border-white/10 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs text-slate-200 font-semibold"
-                                              />
-                                            )}
-                                          </div>
+                                          <input
+                                            type="text"
+                                            value={ex.name}
+                                            onChange={(e) => handleUpdateExercise(blockIdx, dIdx, exIdx, { name: e.target.value })}
+                                            placeholder="Nome esercizio (es. Trazioni, Dip, Push-up...)"
+                                            className="w-full bg-slate-900 border border-white/10 focus:border-blue-500 focus:outline-none p-2 rounded-lg text-xs text-slate-100 font-semibold placeholder:text-slate-500 placeholder:font-normal"
+                                          />
                                         </div>
 
                                         <button
