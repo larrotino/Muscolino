@@ -16,6 +16,7 @@ import { WorkoutSession, DayTemplate, ExerciseTemplate, ExerciseLog, SetLog, Pha
 import { WORKOUT_PROGRAM } from './workoutProgram';
 import Timer, { playTimerBeep } from './components/Timer';
 import History from './components/History';
+import WorkoutAnalyticsChart from './components/WorkoutAnalyticsChart';
 import appLogo from './assets/Icon.png';
 
 export default function App() {
@@ -1311,6 +1312,14 @@ export default function App() {
                         </div>
                       </div>
                     )}
+
+                  {/* Statistiche Progressione Carico & Forza */}
+                  <div className="max-w-3xl mx-auto w-full">
+                    <WorkoutAnalyticsChart
+                      sessions={sessions}
+                      workoutProgram={workoutProgram}
+                    />
+                  </div>
                 </>
               )}
 

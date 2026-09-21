@@ -1,6 +1,6 @@
 {
   "name": "Muscolino",
-  "description": "Applicazione di tracciamento per allenamenti calisthenics strutturata su una scheda di progressione di 12 settimane completamente personalizzabile. Permette di registrare il peso corporeo iniziale, impostare timer di recupero automatici ed esportare la cronologia in formato JSON.",
+  "description": "Applicazione di tracciamento per allenamenti calisthenics strutturata su una scheda di progressione di 12 settimane completamente personalizzabile. Include timer automatici, grafico statistico integrato per monitorare carico di ripetizioni settimanali e punteggio di forza per seduta, ed esportazione cronologia.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
